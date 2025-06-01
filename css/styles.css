@@ -1,0 +1,59 @@
+body {
+    margin: 0;
+    padding: 0 30px;
+    font-family: "Courier New", Courier, monospace;
+    color: #edf2f2;
+    line-height: 1.6;
+
+    /* backgroundimage */
+    background-image: ../images/Background.jpg; 
+    background-size: cover; 
+    background-position: center; 
+    background-repeat: no-repeat; 
+}
+
+/* Halbtransparenter Overlay */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); 
+    z-index: -1;
+}
+
+/* Text- Header */
+header, main, footer {
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+h1, h2 {
+    font-family: "Playfair Display", serif;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+h1 {
+    color: #9BB3FF;
+}
+
+h2 {
+    color: #9BB3FF;
+}
+
+p {
+    margin-bottom: 10px;
+}
+
+form {
+    margin-top: 20px;
+}
+
+/* Link-Style */
+a {
+    color: #9BB3FF;
+    text-decoration: none;
+}
