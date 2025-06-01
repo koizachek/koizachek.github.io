@@ -1,471 +1,237 @@
-/* 
- * Style.css
- * A minimalist, responsive CSS for Diana Kozachek's portfolio website
- * Based on the reference template: https://cargo.site/templates/preview/2820671
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Diana Kozachek - Researcher developing Agentic AI Systems designed to facilitate cognitive flow states">
+    <meta name="keywords" content="Diana Kozachek, AI, Research, Agentic AI Systems, Cognitive Flow">
+    <title>DIANA KOZACHEK</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/koizachek/koizachek.github.io/aiportraits/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/koizachek/koizachek.github.io/aiportraits/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;700&family=Roboto:wght@100;300;400&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Neco-Black';
+            src: url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Black.woff2') format('woff2'),
+                 url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Black.woff') format('woff');            
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Neco-Medium';
+            src: url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Medium.woff2') format('woff2'),
+                 url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Medium.woff') format('woff');            
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>DIANA &nbsp; KOZACHEK</h1>
+                <p class="bio">As a researcher, Diana Kozachek develops Agentic AI Systems designed to facilitate cognitive flow states. As a writer, her work goes beyond enhancing productivity and capability, exploring alternative configurations of consciousness and human-AI synergy. Currently in Switzerland via Beijing and Berlin.</p>
+                <p class="contact">Contact: kozachekdiana(at)gmail(dot)com</p>
+                <div class="social-links">
+                    <a href="https://orcid.org/0000-0001-8302-1007" target="_blank">ORCID</a>
+                    <a href="https://github.com/koizachek" target="_blank">GitHub</a>
+                    <a href="https://www.researchgate.net/profile/Diana-Kozachek" target="_blank">ResearchGate</a>
+                    <a href="https://koizachek.substack.com/" target="_blank">Substack</a>
+                </div>
+            </div>
+        </header>
 
-/* CSS Custom Properties */
-:root {
-    /* Colors */
-    --color-background: #ffffff;
-    --color-background-alt: #f5f5f5;
-    --color-background-dark: #000000;
-    --color-text: #000000;
-    --color-text-light: #666666;
-    --color-text-inverse: #ffffff;
-    --color-accent: #333333;
-    --color-border: #e0e0e0;
-    
-    /* Typography */
-    --font-primary: 'Roboto Thin', 'Roboto', monospace;
-    --font-heading: 'Neco-Black', 'Playfair Display', serif;
-    --font-secondary: 'Neco-Medium', 'Inter', sans-serif;
-    --font-size-base: 16px;
-    --font-size-small: 14px;
-    --font-size-large: 18px;
-    --font-size-xl: 24px;
-    --font-size-xxl: 32px;
-    --line-height: 1.6;
-    
-    /* Spacing */
-    --spacing-xs: 0.5rem;
-    --spacing-sm: 1rem;
-    --spacing-md: 2rem;
-    --spacing-lg: 3rem;
-    --spacing-xl: 5rem;
-    
-    /* Layout */
-    --container-width: 1200px;
-    --header-height: 80px;
-    --border-radius: 4px;
-    --transition-speed: 0.3s;
-}
+        <main class="main-content">
+            <div class="grid-container">
+                <section id="publications" class="section">
+                    <div class="section-header">
+                        <h2>SCIENTIFIC PUBLICATIONS</h2>
+                        <span class="section-number">01</span>
+                    </div>
+                    <div class="section-content">
+                        <ul>
+                            <li><a href="https://dx.doi.org/10.2139/ssrn.4767192" target="_blank">[PREPRINT] What Do European Futures Look Like According to Fine-Tuned Gpt-3, Prompt-Tuned Gpt-3.5, and Few-Shot Prompted Gpt-4?</a> Artificial Intelligence eJournal, May 2024, DOI: 10.2139/ssrn.4767192</li>
+                            <li><a href="https://dl.acm.org/doi/10.1145/3591196.3596827" target="_blank">Investigating the Perception of the Future in GPT-3, -3.5 and GPT-4,</a> C&C '23: Proceedings of the 15th Conference on Creativity and Cognition, June 2023, p. 282–287. DOI: 10.1145/3591196.3596827</li>
+                            <li><a href="https://link.springer.com/chapter/10.1007/978-3-031-35599-8_16" target="_blank">Evaluating the Outcome of Collaborative VR Mind Mapping Sessions with Sentiment Analysis and Emotional Intelligence</a>, International Conference on Human-Computer Interaction HCII 2023: Human-Computer Interaction, p. 245–263. DOI: 10.1007/978-3-031-35599-8_16</li>
+                            <li><a href="https://ieeexplore.ieee.org/document/9582644" target="_blank">How Pedestrians Perceive Autonomous Buses: Evaluating Visual Signals</a>, IEEE International Conference on Human-Machine Systems, ICHMS, June 2021. DOI: 10.1109/ichms53169.2021.9582644</li>
+                        </ul>
+                    </div>
+                </section>
 
-/* Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+                <section id="essays" class="section">
+                    <div class="section-header">
+                        <h2>ESSAYS AND ARTICLES</h2>
+                        <span class="section-number">02</span>
+                    </div>
+                    <div class="section-content">
+                        <ul>
+                            <li><a href="http://texturen.net/" target="_blank">TOKIO - Digitale Interfaces im Stadtkörper</a>, texturen Nr. 8, UdK Verlag, 2021, p. 112-126. ISBN-10, ‎3832554653</li>
+                            <li><a href="http://ssdev.artsoftheworkingclass.org/edition/the-new-serenity" target="_blank">Arts of the Working Class</a>, Issue 17, 12 Aug 2021, Article and Artwork "Feminist Fututures"</li>
+                            <li><a href="https://www.hiig.de/wp-content/uploads/2019/11/IGF-Statements-Critical-Voices-WEB.pdf" target="_blank">Against Prediction - The Power of Imagination in the Age of Codes and Numbers</a>, Internet Governance Forum 2019: Many Worlds, Many Nets, Many Visions, Alexander von Humboldt Institute for Internet and Society, Hans Bredow Institute, 2019</li>
+                        </ul>
+                    </div>
+                </section>
 
-html {
-    font-size: var(--font-size-base);
-    scroll-behavior: smooth;
-}
+                <section id="speaking" class="section">
+                    <div class="section-header">
+                        <h2>SPEAKING/TEACHING</h2>
+                        <span class="section-number">03</span>
+                    </div>
+                    <div class="section-content">
+                        <ul>
+                            <li>UPCOMING Seminar: <a href="https://iwi.unisg.ch/de/lehrstuehle/lehrstuhl-prof-dr-marco-leimeister/" target="_blank">Implementing AI Agents as a Service</a>, HSG, St. Gallen, Switzerland April 2025.</li>
+                            <li>Seminar: Co-Creating Multi-Modal AI Agents for Intelligent Interfaces, NTUT, Taipei, Taiwan 14.01.2025-16.01.2025.</li>
+                            <li><a href="https://www.linkedin.com/company/sherewires/" target="_blank">Panel: Immersive Technologies and Spatial Intelligence</a>, Sherewires, Shanghai, China. 16.11.2024.</li>
+                            <li><a href="https://www.youtube.com/watch?v=6JDa95FZvGQ&t=17s" target="_blank">Presentation: What doe European Futures look like according to Generative AI?</a>, WFSF 2023, World Future Studies Conference, Paris, France. 26.10.2023.</li>
+                            <li><a href="https://2023.hci.international/HCI-program.html" target="_blank">Presentation: Evaluating the Outcome of Collaborative VR Mind Mapping Sessions with Sentiment Analysis and Emotional Intelligence</a>, HCII 2023, 25th International Conference on Human-Computer Interaction, Copenhagen, Denmark 26.07.2023.</li>
+                            <li>Seminar: Automating the Scenario Methodology with Large Language Models. Freie University, Berlin, Germany. 21.07.2023.</li>
+                            <li>Presentation: <a href="https://programs.sigchi.org/c&c/2023/authors/116708" target="_blank">Investigating the Perception of Time in GPT-3, -3.5 and GPT-4</a>, C&C'2023, SIGCHI ACM Conference on Creativity & Cognition 2023, Virtual Event. 20.06.2023.</li>
+                            <li>Seminar: Evaluating Design Prototypes with Large Language Models. National Taipei University of Technology, Taipei, Taiwan 06.10.2022.</li>
+                            <li>Lecture: <a href="https://www.wissenschaftsjahr.de/2019/ki-camp/speakerinnen/index.html" target="_blank">Evaluating AI in Terms of Sustainability</a> Artificial Intelligence Camp (KI-Camp), Berlin, Germany. 05.12.2019</li>
+                        </ul>
+                    </div>
+                </section>
 
-body {
-    margin: 20;
-    font-family: var(--font-primary);
-    line-height: var(--line-height);
-    color: var(--color-text);
-    background-color: var(--color-background);
-    background-size: cover; /* Hintergrund bildschirmfüllend */
-    background-position: center; /* Hintergrund zentrieren */
-    background-repeat: no-repeat; /* Kein Wiederholen */
-    transition: background 0.5s ease-in-out; /* Sanfter Übergang */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
+                <section id="projects" class="section">
+                    <div class="section-header">
+                        <h2>PROJECTS</h2>
+                        <span class="section-number">04</span>
+                    </div>
+                    <div class="section-content">
+                        <ul>
+                            <li>Chongqching, Synthoscene. A non-fiction book to be published in 2026 (Work in Progress)</li>
+                            <li><a href="https://2038.xyz/" target="_blank">2038 – The New Serenity</a>. Research and Text. 2038 is a story between fact and fiction in Form of short films told from the future, showcased at the German Pavilion at the 17th International Architecture Exhibition — La Biennale di Venezia </li>
+                            <li><a href="https://feministfutures.net/" target="_blank">Feminist Futures Archive</a> is an ongoing participatory art project that initiates, creates and archives science fiction stories of a feminist internet. In workshops, talks and exhibitions, imagination and narration serve as tools for public engagement in technological processes</li>
+                        </ul>
+                    </div>
+                </section>
 
-h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: var(--spacing-sm);
-}
+                <section id="experience" class="section">
+                    <div class="section-header">
+                        <h2>PROFESSIONAL EXPERIENCES</h2>
+                        <span class="section-number">05</span>
+                    </div>
+                    <div class="section-content">
+                        <ul>
+                            <li><strong>Volkswagen Group China, Research and Development Center V-Labs, Beijing</strong><br>
+                            Applied Researcher and Data Analyst. Implementing LLMs into decision-making processes</li>
+                            
+                            <li><strong>Fraunhofer Institute for Innovation and Systems Research (ISI), Karlsruhe</strong><br>
+                            Applied Researcher and Data Analyst in the Foresight Competence Center, February 2021 - August 2023</li>
+                            
+                            <li><strong>Metaverse Research Lab, Taipei</strong><br>
+                            Applied Researcher and Data Analyst in the Metaverse Research Lab at the National Taipei University of Technology (NTUT), July 2022 - October 2022</li>
+                            
+                            <li><strong>Fraunhofer Institute for Production Systems and Design Technology (IPK), Berlin</strong><br>
+                            Applied Researcher and Data Analyst in the Virtual Product Creation Division, May 2020 – February 2021</li>
+                            
+                            <li><strong>Motif Institute for Digital Culture, Berlin</strong><br>
+                            Researcher and Strategist, July 2019 – June 2020</li>
+                            
+                            <li><strong>Scholz and Friends Group GmbH Berlin</strong><br>
+                            Digital Concept Developer, August 2017 - July 2019</li>
+                        </ul>
+                    </div>
+                </section>
 
-h1 {
-    font-size: var(--font-size-xxl);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
+                <section id="education" class="section">
+                    <div class="section-header">
+                        <h2>EDUCATION</h2>
+                        <span class="section-number">06</span>
+                    </div>
+                    <div class="section-content">
+                        <ul>
+                            <li><strong>University of St. Gallen, St. Gallen, Department of Information Management</strong><br>
+                                Doctoral Student starting 2025: Developing Agentic AI Applications to Benefit the Human Cognitive State</li>                    
+                            <li><strong>Freie University, Berlin, Department of Psychology</strong><br> 
+                                Master of Arts: Future Studies and Computer Science</li>           
+                            <li><strong>Fern University, Hagen, Department of Mathematics and Computer Science</strong><br>
+                                Bachelor of Science: Mathematics and Computer Science</li>         
+                            <li><strong>University of the Arts, Berlin, Department of Design</strong><br>
+                                Bachelor of Arts: Communications in Social and Economic Contexts</li>
+                        </ul>
+                    </div>
+                </section>
 
-h2 {
-    font-size: var(--font-size-xl);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-}
+                <section id="awards" class="section">
+                    <div class="section-header">
+                        <h2>AWARDS AND SCHOLARSHIPS</h2>
+                        <span class="section-number">07</span>
+                    </div>
+                    <div class="section-content">
+                        <ul>
+                            <li><strong>DAAD Language and Practice in China</strong> (16-month Fellowship) August 2023<br>
+                            Fully funded 10 months of intense Chinese language learning at the Beijing Foreign Studies University, as well as 6 months of industry work in Beijing in a German-Chinese company</li>
+                            
+                            <li><a href="https://aianarchies.net/school" target="_blank"><strong>AI Anarchies Autumn School</strong></a> (Fellowship) October 2022<br>
+                            The transdisciplinary School at Akademie der Künste in Berlin curated by Maya Indira Ganesh and Nora N. Khan from Oxford University, brought together global communities of artists, scholars, cultural producers, focusing on creating new modes of thinking on the topic of AI Ethics</li>
+                            
+                            <li><strong>DAAD Taiwan Summer Institute Program</strong> (4-month scholarship) July 2022<br>
+                            Fully funded 4 month research scholarship at the National Taipei University of Technology</li>
+                            
+                            <li><strong>New European Bauhaus Rising Stars</strong> (shortlisted) European Commission August 2021<br>
+                            I conceptualized and implemented the ongoing participatory project "feminist futures" into a digital plattform. Feminist Futures aims to co-create digital, inclusive futures.</li>
+                        </ul>
+                    </div>
+                </section>
 
-p {
-    margin-bottom: var(--spacing-sm);
-}
+                <section id="skills" class="section">
+                    <div class="section-header">
+                        <h2>HARD SKILLS</h2>
+                        <span class="section-number">08</span>
+                    </div>
+                    <div class="section-content">
+                        <ul>
+                            <li><strong>Data Analysis and Visualization with Python</strong> (advanced)<br>
+                            Most used specialized libraries: BERT, NLTK and Tensorflow<br>
+                            Regularly used libraries: pandas, numpy, matplotlib, sklearn</li>
+                            
+                            <li><strong>Other data analysis software:</strong><br>
+                            Excel (intermediate), C++ (basic), SQL (basic), R (basic), SPSS (basic)</li>
+                            
+                            <li><strong>Data Visualization:</strong> Tableau (intermediate)</li>
+                            
+                            <li><strong>Network Study and Visualization:</strong> Gephi (intermediate)</li>
+                            
+                            <li><strong>User Experience Prototyping:</strong> Adobe XD</li>
+                            
+                            <li><strong>Languages:</strong><br>
+                            German (native), English (C1), Russian (fluent), Mandarin Chinese (HSK3, still learning), French (B1)</li>
+                        </ul>
+                    </div>
+                </section>
 
-a {
-    color: var(--color-text);
-    text-decoration: none;
-    transition: color var(--transition-speed) ease;
-}
+                <section id="contact" class="section">
+                    <div class="section-header">
+                        <h2>CONTACT</h2>
+                        <span class="section-number">09</span>
+                    </div>
+                    <div class="section-content">
+                        <form id="emailForm" action="mailto:kozachekdiana@gmail.com" method="post" enctype="text/plain">
+                            <div class="form-group">
+                                <label for="senderEmail">Email</label>
+                                <input type="email" id="senderEmail" name="senderEmail" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="message">Message</label>
+                                <textarea id="message" name="message" rows="4" required></textarea>
+                            </div>
+                            <button type="submit" class="submit-btn">Send</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
 
-a:hover {
-    color: var(--color-text-light);
-}
+        <footer class="footer">
+            <p>&copy; 2025 Diana Kozachek. All rights reserved.</p>
+        </footer>
+    </div>
 
-ul {
-    list-style: none;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
-
-/* Container */
-.container {
-    width: 100%;
-    max-width: var(--container-width);
-    margin: 0 auto;
-    padding: 0 var(--spacing-sm);
-}
-
-/* Header */
-.header {
-    padding: var(--spacing-lg) 0;
-    margin-bottom: var(--spacing-lg);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.header-content {
-    max-width: 800px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.bio {
-    margin-bottom: var(--spacing-md);
-    font-size: var(--font-size-large);
-    line-height: 1.8;
-}
-
-.contact {
-    margin-bottom: var(--spacing-sm);
-    color: var(--color-text-light);
-}
-
-.social-links {
-    display: flex;
-    justify-content: center;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-md);
-}
-
-.social-links a {
-    position: relative;
-}
-
-.social-links a::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 1px;
-    bottom: -2px;
-    left: 0;
-    background-color: var(--color-text);
-    transition: width var(--transition-speed) ease;
-}
-
-.social-links a:hover::after {
-    width: 100%;
-}
-
-/* Main Content */
-.main-content {
-    padding: var(--spacing-md) 0;
-}
-
-/* Grid Layout */
-.grid-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-xl);
-}
-
-/* Section Styling */
-.section {
-    margin-bottom: var(--spacing-xl);
-    position: relative;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: var(--spacing-xs);
-    position: relative;
-}
-
-.section-number {
-    font-family: var(--font-heading);
-    font-size: var(--font-size-large);
-    color: var(--color-text-light);
-}
-
-.section-content {
-    padding: var(--spacing-sm) 0;
-}
-
-.section-content ul li {
-    margin-bottom: var(--spacing-md);
-    position: relative;
-    padding-left: var(--spacing-sm);
-}
-
-.section-content ul li::before {
-    content: '—';
-    position: absolute;
-    left: -15px;
-    color: var(--color-text-light);
-}
-
-.section-content ul li a {
-    font-weight: 500;
-}
-
-.section-content ul li strong {
-    display: inline-block;
-    margin-bottom: var(--spacing-xs);
-}
-
-/* Project Styling */
-.project {
-    margin-bottom: var(--spacing-lg);
-}
-
-.project-image {
-    margin-bottom: var(--spacing-sm);
-    position: relative;
-    overflow: hidden;
-}
-
-.project-image img {
-    transition: transform var(--transition-speed) ease;
-}
-
-.project-image:hover img {
-    transform: scale(1.03);
-}
-
-.project-title {
-    margin-bottom: var(--spacing-xs);
-}
-
-.project-description {
-    color: var(--color-text-light);
-}
-
-/* Contact Form */
-.form-group {
-    margin-bottom: var(--spacing-md);
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: var(--spacing-xs);
-    font-weight: 500;
-}
-
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: var(--spacing-sm);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    font-family: var(--font-primary);
-    font-size: var(--font-size-base);
-    transition: border-color var(--transition-speed) ease;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--color-accent);
-}
-
-.submit-btn {
-    background-color: var(--color-accent);
-    color: var(--color-text-inverse);
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-family: var(--font-primary);
-    font-size: var(--font-size-base);
-    cursor: pointer;
-    transition: background-color var(--transition-speed) ease;
-}
-
-.submit-btn:hover {
-    background-color: var(--color-text);
-}
-
-/* Footer */
-.footer {
-    padding: var(--spacing-lg) 0;
-    text-align: center;
-    border-top: 1px solid var(--color-border);
-    margin-top: var(--spacing-xl);
-    color: var(--color-text-light);
-}
-
-/* Dark Mode Variations */
-.dark-mode {
-    background-color: var(--color-background-dark);
-    color: var(--color-text-inverse);
-}
-
-.dark-mode .section-header {
-    border-bottom-color: rgba(255, 255, 255, 0.2);
-}
-
-.dark-mode a {
-    color: var(--color-text-inverse);
-}
-
-.dark-mode a:hover {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-/* Media Queries for Responsive Design */
-/* Tablet (768px and up) */
-@media screen and (min-width: 768px) {
-    :root {
-        --font-size-base: 17px;
-        --font-size-xl: 28px;
-        --font-size-xxl: 40px;
-    }
-    
-    .container {
-        padding: 0 var(--spacing-md);
-    }
-    
-    .grid-container {
-        grid-template-columns: 1fr 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .section-header {
-        margin-bottom: var(--spacing-lg);
-    }
-}
-
-/* Desktop (1024px and up) */
-@media screen and (min-width: 1024px) {
-    :root {
-        --font-size-base: 18px;
-        --font-size-xl: 32px;
-        --font-size-xxl: 48px;
-    }
-    
-    .container {
-        padding: 0 var(--spacing-lg);
-    }
-    
-    .header {
-        padding: var(--spacing-xl) 0;
-    }
-    
-    .header-content {
-        max-width: 900px;
-    }
-    
-    .bio {
-        font-size: var(--font-size-xl);
-    }
-    
-    .grid-container {
-        gap: var(--spacing-xl);
-    }
-    
-    .section {
-        margin-bottom: var(--spacing-xl) * 1.5;
-    }
-}
-
-/* Large Desktop (1440px and up) */
-@media screen and (min-width: 1440px) {
-    .container {
-        max-width: 1400px;
-    }
-    
-    .header-content {
-        max-width: 1000px;
-    }
-}
-
-/* Print Styles */
-@media print {
-    body {
-        font-size: 12pt;
-        line-height: 1.4;
-        color: #000;
-        background: #fff;
-    }
-    
-    .container {
-        width: 100%;
-        max-width: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .header, .footer {
-        padding: 1cm 0;
-    }
-    
-    a {
-        color: #000;
-        text-decoration: underline;
-    }
-    
-    .social-links, .submit-btn {
-        display: none;
-    }
-}
-
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.section {
-    animation: fadeIn 0.6s ease-out forwards;
-}
-
-.section:nth-child(2) {
-    animation-delay: 0.1s;
-}
-
-.section:nth-child(3) {
-    animation-delay: 0.2s;
-}
-
-.section:nth-child(4) {
-    animation-delay: 0.3s;
-}
-
-.section:nth-child(5) {
-    animation-delay: 0.4s;
-}
-
-.section:nth-child(6) {
-    animation-delay: 0.5s;
-}
-
-.section:nth-child(7) {
-    animation-delay: 0.6s;
-}
-
-.section:nth-child(8) {
-    animation-delay: 0.7s;
-}
-
-.section:nth-child(9) {
-    animation-delay: 0.8s;
-}
+    <script src="js/script.js"></script>
+</body>
+</html>
