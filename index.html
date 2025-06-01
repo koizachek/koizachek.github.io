@@ -26,11 +26,11 @@
             margin: 20;
             font-family: "Roboto Thin", Roboto Thin, monospace;
             font-size: 16px;
-            background-size: cover; /* Hintergrund bildschirmfüllend */
+            background-size: cover; /* bildschirmfüllend */
             background-position: center; /* Hintergrund zentrieren */
             background-repeat: no-repeat; /* Kein Wiederholen */
             transition: background 0.5s ease-in-out; /* Sanfter Übergang */
-            color: #FFFFFF;
+            color: #431202;
             line-height: 1.6;
         }
         header, main, footer {
@@ -38,7 +38,7 @@
             margin-bottom: 20px;
         }
         h1, h2 {
-            font-family: "Playfair Display", serif; /* Spezielle Schriftart für Titel */
+            font-family: "Playfair Display", serif; /* Schriftart für Titel */
             font-size: 24px;
             margin-bottom: 10px;
         }
@@ -60,17 +60,16 @@
         }
          /* Link-Stil */
         a {
-            color: #FFFFFF; /* Farbcode für taupe */
+            color: #431202; 
             text-decoration: none; /* Entfernt die Unterstreichung der Links */
             font-weight: bold;
             font-size: 16px;
         }
         /* Stil für das Bild */
         img {
-            position: absolute; /* Absolute Positionierung */
+            position: absolute; 
             opacity: 0.55; /* Transparenz auf 50% */
-            z-index: -1; /* Hinter dem Text */
-            /* Hier können Sie die Größe des Bildes anpassen */
+            z-index: -1; /* Hinter Text */
             width: 400px;
             height: 400px;
         }
@@ -81,18 +80,16 @@
 <body>
 
     <script>
-        // Liste aller Bild-URLs im Repository
+        // Bild-URLs im Repository
         var imageUrls = [
             "https://raw.githubusercontent.com/koizachek/koizachek.github.io/aiportraits/background3.JPG",
-            "https://raw.githubusercontent.com/koizachek/koizachek.github.io/aiportraits/background8.JPG",
-            // Hier füge ich weitere Bild-URLs hinzu, falls vorhanden
         ];
 
-        // Zufällig ein Bild auswählen
+        // Zufälliges Bild
         var randomIndex = Math.floor(Math.random() * imageUrls.length);
         var randomImageUrl = imageUrls[randomIndex];
         
-        // Hintergrundbild für den Body setzen
+        // Hintergrundbild für Body
         document.body.style.backgroundImage = `url('${randomImageUrl}')`;
     </script>
     <header>
