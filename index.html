@@ -3,183 +3,734 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIANA KOZACHEK</title>    
+    <title>DIANA KOZACHEK</title>
     <link rel="icon" href="https://raw.githubusercontent.com/koizachek/koizachek.github.io/aiportraits/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="https://raw.githubusercontent.com/koizachek/koizachek.github.io/aiportraits/favicon.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         @font-face {
             font-family: 'Neco-Black';
             src: url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Black.woff2') format('woff2'),
-                 url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Black.woff') format('woff');            
-            font-weight: normal;
-            font-style: normal;
+                 url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Black.woff') format('woff');
         }
-        @font-face {
-            font-family: 'Neco-Medium';
-            src: url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Medium.woff2') format('woff2'),
-                 url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Medium.woff') format('woff');            
-            font-weight: normal;
-            font-style: normal;
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --cerulean: #1d84ff;
+            --cerulean-glow: rgba(29,132,255,0.45);
         }
 
         body {
-            margin: 20;
-            font-family: "Roboto Thin", Roboto Thin, monospace;
-            font-size: 16px;
-            background-size: cover; /* bildschirmfüllend */
-            background-position: center; /* Hintergrund zentrieren */
-            background-repeat: no-repeat; /* Kein Wiederholen */
-            transition: background 0.5s ease-in-out; /* Sanfter Übergang */
-            color: #431202;
-            line-height: 1.6;
+            background: #000;
+            color: #fff;
+            font-family: 'Press Start 2P', monospace;
+            overflow: hidden;
+            cursor: none;
         }
-        header, main, footer {
-            padding: 50px;
-            margin-bottom: 20px;
+
+        /* CRT scanlines */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0.07) 0px, rgba(0,0,0,0.07) 1px,
+                transparent 1px, transparent 3px
+            );
+            pointer-events: none;
+            z-index: 997;
         }
-        h1, h2 {
-            font-family: "Playfair Display", serif; /* Schriftart für Titel */
-            font-size: 24px;
-            margin-bottom: 10px;
+        /* Vignette */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,0.72) 100%);
+            pointer-events: none;
+            z-index: 996;
         }
-        h1 {
-            font-family: 'Neco-Black'; 
-            font-size: 40px;
-            color: #431202;
+
+        /* ── Blob cursor */
+        #cursor {
+            position: fixed;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(29,132,255,1) 0%, rgba(29,100,255,0.6) 45%, transparent 70%);
+            box-shadow: 0 0 10px var(--cerulean-glow), 0 0 24px rgba(29,132,255,0.25);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1000;
+            transition: width .12s, height .12s;
+            mix-blend-mode: screen;
         }
-        h2 {
-            font-family: 'Neco-Medium'; 
-            font-size: 26px;
-            color: #431202;
+        #cursor.big { width: 32px; height: 32px; }
+
+        /* ── Animated canvas — fixed, behind everything */
+        #net-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            pointer-events: none;
         }
-        p {
-            margin-bottom: 20px;
+
+        /* ── Snap scroll */
+        .snap-wrap {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            position: relative;
+            z-index: 2;
         }
-        form {
-            margin-top: 20px;
+        .snap-wrap::-webkit-scrollbar { display: none; }
+
+        .s {
+            height: 100vh;
+            scroll-snap-align: start;
+            position: relative;
+            overflow: hidden;
         }
-         /* Link-Stil */
-        a {
-            color: #431202; 
-            text-decoration: none; /* Entfernt die Unterstreichung der Links */
-            font-weight: bold;
-            font-size: 16px;
+        .s-hero     { background: transparent; }
+        .s-work     { background: rgba(3,2,1,0.68); }
+        .s-research { background: rgba(5,4,2,0.68); }
+        .s-about    { background: rgba(7,6,4,0.68); }
+
+        /* ── HUD nav */
+        #hud {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 28px;
+            z-index: 500;
+            font-size: 7px;
+            letter-spacing: 0.18em;
         }
-        /* Stil für das Bild */
-        img {
-            position: absolute; 
-            opacity: 0.55; /* Transparenz auf 50% */
-            z-index: -1; /* Hinter Text */
-            width: 400px;
-            height: 400px;
+        .hud-item {
+            color: rgba(255,255,255,0.22);
+            cursor: pointer;
+            text-decoration: none;
+            transition: color .25s;
         }
-    </style>
-</head>
+        .hud-item.active { color: #fff; }
+        .hud-item.active::before { content: '▶ '; }
+        .hud-item:hover { color: var(--cerulean); }
+
+        /* ── HERO */
+        .hero-name {
+            position: absolute;
+            top: 38px;
+            left: 48px;
+            font-family: 'Neco-Black', sans-serif;
+            font-size: clamp(26px, 3.8vw, 52px);
+            line-height: 0.92;
+            color: #fff;
+            z-index: 10;
+            letter-spacing: 0.01em;
+        }
+        .hero-meta {
+            position: absolute;
+            top: 42px;
+            right: 48px;
+            font-size: 6px;
+            line-height: 2.2;
+            color: rgba(255,255,255,0.38);
+            text-align: right;
+            z-index: 10;
+            letter-spacing: 0.12em;
+        }
+        .blink-cta {
+            position: absolute;
+            bottom: 52px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 6px;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.2em;
+            animation: blink 1.1s step-end infinite;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+        /* ── Content sections */
+        .s-inner {
+            position: absolute;
+            inset: 0;
+            padding: 42px 52px;
+            display: flex;
+            flex-direction: column;
+            z-index: 5;
+        }
+
+        .s-num {
+            font-size: 7px;
+            color: rgba(255,255,255,0.22);
+            letter-spacing: 0.22em;
+            margin-bottom: 6px;
+        }
+        .s-title {
+            font-family: 'Neco-Black', sans-serif;
+            font-size: clamp(22px, 3.5vw, 44px);
+            line-height: 1;
+            color: #fff;
+            margin-bottom: 32px;
+            letter-spacing: 0.02em;
+        }
+        .cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px 52px;
+            flex: 1;
+            min-height: 0;
+        }
+        .col-head {
+            font-size: 6px;
+            letter-spacing: 0.24em;
+            color: rgba(255,255,255,0.28);
+            margin-bottom: 12px;
+            padding-bottom: 7px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .entry {
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: opacity .42s ease, transform .42s ease;
+        }
+        .entry.show { opacity: 1; transform: translateX(0); }
+
+        /* ── Links & hover */
+        .e-title {
+            font-size: 6px;
+            line-height: 2;
+            color: rgba(255,255,255,0.78);
+            text-decoration: none;
+            display: block;
+            transition: color .18s, text-shadow .18s;
+        }
+        a.e-title:hover {
+            color: var(--cerulean);
+            text-shadow: 0 0 10px var(--cerulean-glow);
+        }
+        .e-meta {
+            font-size: 5px;
+            color: rgba(255,255,255,0.27);
+            margin-top: 2px;
+            letter-spacing: 0.06em;
+        }
+
+        /* ── ABOUT */
+        .about-wrap {
+            position: absolute;
+            inset: 0;
+            padding: 42px 52px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 5;
+        }
+        .about-bio {
+            font-size: 6px;
+            line-height: 2.6;
+            color: rgba(255,255,255,0.62);
+            max-width: 520px;
+            margin-top: 32px;
+        }
+        .about-links {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .about-links a {
+            font-size: 5px;
+            letter-spacing: 0.15em;
+            color: rgba(255,255,255,0.44);
+            text-decoration: none;
+            padding: 6px 9px;
+            border: 1px solid rgba(255,255,255,0.12);
+            transition: color .18s, border-color .18s, text-shadow .18s;
+        }
+        .about-links a:hover {
+            color: var(--cerulean);
+            border-color: var(--cerulean);
+            text-shadow: 0 0 8px var(--cerulean-glow);
+        }
+        .about-copy { font-size: 5px; color: rgba(255,255,255,0.15); letter-spacing: 0.12em; }
+
+        @media (max-width: 640px) {
+            .hero-name { font-size: 24px; left: 24px; top: 28px; }
+            .hero-meta { right: 24px; }
+            .s-inner, .about-wrap { padding: 28px 20px; }
+            .cols { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <script>
-        // Bild-URLs im Repository
-        var imageUrls = [
-            "https://raw.githubusercontent.com/koizachek/koizachek.github.io/aiportraits/background3.JPG",
-        ];
+<div id="cursor"></div>
+<canvas id="net-canvas"></canvas>
 
-        // Zufälliges Bild
-        var randomIndex = Math.floor(Math.random() * imageUrls.length);
-        var randomImageUrl = imageUrls[randomIndex];
-        
-        // Hintergrundbild für Body
-        document.body.style.backgroundImage = `url('${randomImageUrl}')`;
-    </script>
-    <header>
-        <h1>DIANA &nbsp; KOZACHEK</h1>
-<p>
-  As a researcher, Diana Kozachek develops Agentic AI Systems designed to facilitate cognitive flow states and support critical thinking and problem-solving abilities. 
-  As a writer, her work explores alternative configurations of thinking and working in an human-AI synergy.
-  Contact: <a id="c" href="#" rel="nofollow">Kontakt</a>
-</p>
+<nav id="hud">
+    <a class="hud-item active" data-idx="0" href="#">HERO</a>
+    <a class="hud-item" data-idx="1" href="#">WORK</a>
+    <a class="hud-item" data-idx="2" href="#">RESEARCH</a>
+    <a class="hud-item" data-idx="3" href="#">ABOUT</a>
+</nav>
+
+<div class="snap-wrap" id="snap">
+
+    <!-- 0 · HERO -->
+    <section class="s s-hero">
+        <div class="hero-name">DIANA<br>KOZACHEK</div>
+        <div class="hero-meta">PHD RESEARCHER<br>HCI · AGENTIC AI<br>BERLIN DE</div>
+        <p class="blink-cta">▼ SCROLL TO START ▼</p>
+    </section>
+
+    <!-- 1 · WORK -->
+    <section class="s s-work">
+        <div class="s-inner">
+            <p class="s-num">01</p>
+            <h2 class="s-title">WORK</h2>
+            <div class="cols">
+                <div>
+                    <p class="col-head">PROJECTS</p>
+                    <div class="entry">
+                        <span class="e-title">Chongqing, Synthoscene</span>
+                        <p class="e-meta">Non-fiction book · 2027 · WIP</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://2038.xyz/" target="_blank">2038 — The New Serenity</a>
+                        <p class="e-meta">Research &amp; Text · La Biennale di Venezia</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://feministfutures.net/" target="_blank">Feminist Futures Archive</a>
+                        <p class="e-meta">Ongoing participatory art project</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="col-head">ESSAYS</p>
+                    <div class="entry">
+                        <a class="e-title" href="https://donotresearch.substack.com/p/diana-kozachek-synthoscene-chongqing" target="_blank">Synthoscene, Chongqing</a>
+                        <p class="e-meta">Do Not Research · 2025</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="http://texturen.net/" target="_blank">TOKIO — Digitale Interfaces im Stadtkörper</a>
+                        <p class="e-meta">texturen Nr. 8 · UdK Verlag · 2021</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="http://ssdev.artsoftheworkingclass.org/edition/the-new-serenity" target="_blank">Feminist Futures</a>
+                        <p class="e-meta">Arts of the Working Class · Issue 17 · 2021</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://www.hiig.de/wp-content/uploads/2019/11/IGF-Statements-Critical-Voices-WEB.pdf" target="_blank">Against Prediction</a>
+                        <p class="e-meta">Internet Governance Forum · 2019</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2 · RESEARCH -->
+    <section class="s s-research">
+        <div class="s-inner">
+            <p class="s-num">02</p>
+            <h2 class="s-title">RESEARCH</h2>
+            <div class="cols">
+                <div>
+                    <p class="col-head">PUBLICATIONS</p>
+                    <div class="entry">
+                        <a class="e-title" href="https://doi.org/10.1016/j.futures.2025.103705" target="_blank">Entering the Age of Hybrid Futures</a>
+                        <p class="e-meta">Elsevier Futures · 2025</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://dl.acm.org/doi/10.1145/3591196.3596827" target="_blank">Investigating the Perception of the Future in GPT-3, -3.5 and GPT-4</a>
+                        <p class="e-meta">C&amp;C '23 · ACM · 2023</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://link.springer.com/chapter/10.1007/978-3-031-35599-8_16" target="_blank">Evaluating Collaborative VR Mind Mapping with Sentiment Analysis</a>
+                        <p class="e-meta">HCII 2023 · Springer</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://ieeexplore.ieee.org/document/9582644" target="_blank">How Pedestrians Perceive Autonomous Buses</a>
+                        <p class="e-meta">IEEE ICHMS · 2021</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="col-head">SELECTED TALKS</p>
+                    <div class="entry">
+                        <a class="e-title" href="https://www.fit-kongress.de/agenda-2025" target="_blank">Keynote: Entering the Age of Agentic AI</a>
+                        <p class="e-meta">FIT Kongress · Augsburg · 2025</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://www.cais-research.de/creating-spaces-for-digital-futures-program/" target="_blank">Workshop: Building AI Agents for Public Good</a>
+                        <p class="e-meta">CAIS · Bochum · 2025</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://www.youtube.com/watch?v=6JDa95FZvGQ&t=17s" target="_blank">Keynote: European Futures &amp; Generative AI</a>
+                        <p class="e-meta">WFSF 2023 · Paris</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://programs.sigchi.org/c&c/2023/authors/116708" target="_blank">Keynote: Perception of Time in GPT-3 &amp; GPT-4</a>
+                        <p class="e-meta">C&amp;C '23 · SIGCHI ACM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3 · ABOUT -->
+    <section class="s s-about">
+        <div class="about-wrap">
+            <div>
+                <p class="s-num">03</p>
+                <h2 class="s-title">ABOUT</h2>
+                <p class="about-bio">
+                    Develops Agentic AI Systems designed to facilitate<br>
+                    cognitive flow states and support critical thinking<br>
+                    and problem-solving abilities.<br><br>
+                    As a writer, explores alternative configurations<br>
+                    of thinking and working in human-AI synergy.
+                </p>
+            </div>
+            <div class="about-links">
+                <a href="https://github.com/koizachek" target="_blank">GITHUB</a>
+                <a href="https://www.researchgate.net/profile/Diana-Kozachek" target="_blank">RESEARCHGATE</a>
+                <a href="https://koizachek.substack.com/" target="_blank">SUBSTACK</a>
+                <a id="contact-link" href="#">CONTACT</a>
+            </div>
+            <p class="about-copy">© 2026 DIANA KOZACHEK</p>
+        </div>
+    </section>
+
+</div><!-- /snap-wrap -->
+
 <script>
-  (function(){
-    const u = [107,111,122,97,99,104,101,107,100,105,97,110,97].map(String.fromCharCode).join("");
-    const d = [103,109,97,105,108,46,99,111,109].map(String.fromCharCode).join("");
-    const el = document.getElementById("c");
-    el.textContent = u + String.fromCharCode(64) + d;
-    el.href = "mailto:" + el.textContent;
-  })();
+// ══════════════════════════════════════════
+//  CURSOR — cerulean blob
+// ══════════════════════════════════════════
+const cur = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+    cur.style.left = e.clientX + 'px';
+    cur.style.top  = e.clientY + 'px';
+});
+document.querySelectorAll('a, .hud-item').forEach(el => {
+    el.addEventListener('mouseenter', () => cur.classList.add('big'));
+    el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+});
+
+// ══════════════════════════════════════════
+//  CONTACT obfuscation
+// ══════════════════════════════════════════
+(function () {
+    const u = [107,111,122,97,99,104,101,107,100,105,97,110,97].map(String.fromCharCode).join('');
+    const d = [103,109,97,105,108,46,99,111,109].map(String.fromCharCode).join('');
+    const el = document.getElementById('contact-link');
+    if (el) { el.textContent = 'CONTACT'; el.href = 'mailto:' + u + '@' + d; }
+})();
+
+// ══════════════════════════════════════════
+//  NETWORK CANVAS  — complex orbital graph
+// ══════════════════════════════════════════
+(function () {
+    const canvas = document.getElementById('net-canvas');
+    const ctx    = canvas.getContext('2d');
+    const SCALE  = 3;
+
+    function resize() {
+        canvas.width  = Math.max(1, Math.floor(window.innerWidth  / SCALE));
+        canvas.height = Math.max(1, Math.floor(window.innerHeight / SCALE));
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // ── Build network: 5 major hub spines + clusters
+    const nodes = [];
+    const edges = [];
+    const hubIndices = [];
+
+    // Major hub spine positions (nx/ny normalised 0–1)
+    const SPINE = [
+        [0.50, 0.05],
+        [0.38, 0.24],
+        [0.60, 0.44],
+        [0.36, 0.64],
+        [0.58, 0.83],
+    ];
+
+    function mkNode(nx, ny, r, isHub, phaseOffset) {
+        return {
+            nx: Math.max(0.04, Math.min(0.96, nx)),
+            ny: Math.max(0.02, Math.min(0.98, ny)),
+            r,
+            isHub,
+            phase:  phaseOffset,
+            ps:     0.38 + (phaseOffset % 1.0) * 0.9,
+            or:     r * 2.6,
+            oa:     phaseOffset * 2.1,
+            os:     (Math.round(phaseOffset * 10) % 2 ? 1 : -1) * (0.55 + (phaseOffset % 0.5)),
+            or2:    isHub ? r * 4.2 : 0,
+            oa2:    phaseOffset * 3.3,
+            os2:    (Math.round(phaseOffset * 7) % 2 ? -1 : 1) * 0.38,
+        };
+    }
+
+    // Place major hubs
+    SPINE.forEach(([nx, ny], hi) => {
+        hubIndices.push(nodes.length);
+        nodes.push(mkNode(nx, ny, 5 + (hi === 2 ? 1 : 0), true, hi * 1.37));
+    });
+
+    // Connect hub spine
+    for (let i = 0; i < SPINE.length - 1; i++) edges.push([hubIndices[i], hubIndices[i + 1]]);
+    // Long-range hub cross-links
+    [[0,2],[1,3],[2,4],[0,3],[1,4]].forEach(([a,b]) => edges.push([hubIndices[a], hubIndices[b]]));
+
+    // Sub-hubs and micro-nodes around each major hub
+    SPINE.forEach(([hx, hy], hi) => {
+        const mainHub = hubIndices[hi];
+        const subHubIdx = [];
+
+        // 3–4 sub-hubs per major hub
+        const subCount = 3 + (hi % 2);
+        for (let s = 0; s < subCount; s++) {
+            const angle = (s / subCount) * Math.PI * 2 + hi * 1.1;
+            const dist  = 0.065 + (s % 2) * 0.028;
+            const idx   = nodes.length;
+            subHubIdx.push(idx);
+            nodes.push(mkNode(
+                hx + Math.cos(angle) * dist,
+                hy + Math.sin(angle) * dist * 0.82,
+                2 + (s % 2), false, hi * 1.8 + s * 0.93
+            ));
+            edges.push([mainHub, idx]);
+        }
+        // Ring sub-hubs together
+        for (let s = 0; s < subHubIdx.length; s++) {
+            edges.push([subHubIdx[s], subHubIdx[(s + 1) % subHubIdx.length]]);
+        }
+
+        // 5–7 micro nodes per major hub (very small, 1 px)
+        const microCount = 5 + hi;
+        for (let m = 0; m < microCount; m++) {
+            const angle = (m / microCount) * Math.PI * 2 + hi * 0.65 + 0.4;
+            const dist  = 0.033 + (m % 4) * 0.012;
+            const idx   = nodes.length;
+            nodes.push(mkNode(
+                hx + Math.cos(angle) * dist,
+                hy + Math.sin(angle) * dist * 0.9,
+                1, false, hi * 2.2 + m * 0.61
+            ));
+            // Connect to nearest sub-hub or main hub
+            const target = m < subHubIdx.length ? subHubIdx[m] : mainHub;
+            edges.push([target, idx]);
+            if (m > 0) edges.push([idx - 1, idx]);
+        }
+
+        // Extra cross-wires between sub-hubs of adjacent spines
+        if (hi > 0 && subHubIdx.length > 0) {
+            const prevSub = nodes.length - microCount - subCount - 1;
+            if (prevSub >= 0) edges.push([prevSub, subHubIdx[0]]);
+        }
+    });
+
+    // ── Signal pulses travelling along edges
+    const pulses = edges
+        .map((e, i) => i % 3 === 0
+            ? { edgeIdx: i, t: Math.random(), speed: 0.0018 + (i % 9) * 0.0006 }
+            : null
+        ).filter(Boolean);
+
+    // ── Glow (two-frequency sum → organic rhythm)
+    function glowOf(n, t) {
+        return Math.max(0.05, Math.min(1,
+            0.40
+            + Math.sin(t * n.ps + n.phase) * 0.38
+            + Math.sin(t * n.ps * 1.73 + n.phase * 0.88) * 0.16
+        ));
+    }
+
+    // ── Draw dashed ring + satellite
+    function drawRing(px, py, r, angle) {
+        const PW = canvas.width, PH = canvas.height;
+        const steps = Math.max(8, Math.round(r * 2.6));
+        for (let d = 0; d < steps; d++) {
+            if (d % 3 === 0) continue;
+            const a  = (d / steps) * Math.PI * 2;
+            const rx = Math.round(px + Math.cos(a) * r);
+            const ry = Math.round(py + Math.sin(a) * r);
+            if (rx < 0 || ry < 0 || rx >= PW || ry >= PH) continue;
+            ctx.fillStyle = 'rgba(115,162,208,0.36)';
+            ctx.fillRect(rx, ry, 1, 1);
+        }
+        // Satellite dot
+        const sx = Math.round(px + Math.cos(angle) * r);
+        const sy = Math.round(py + Math.sin(angle) * r);
+        ctx.fillStyle = 'rgba(205,228,255,0.9)';
+        ctx.fillRect(sx - 1, sy - 1, 2, 2);
+    }
+
+    // ── Draw one node
+    function drawNode(n, t, PW, PH, spread) {
+        const px = Math.round((n.nx - 0.5) * PW * spread + PW / 2);
+        const py = Math.round(n.ny * PH);
+        const g  = glowOf(n, t);
+        const r  = n.r;
+
+        // Bloom
+        const gr = r + Math.round(g * 8);
+        const grd = ctx.createRadialGradient(px, py, 0, px, py, gr);
+        grd.addColorStop(0,   `rgba(150,200,255,${(g * 0.52).toFixed(2)})`);
+        grd.addColorStop(0.5, `rgba(95,158,255,${(g * 0.2).toFixed(2)})`);
+        grd.addColorStop(1,   'rgba(55,115,255,0)');
+        ctx.beginPath(); ctx.arc(px, py, gr, 0, Math.PI * 2);
+        ctx.fillStyle = grd; ctx.fill();
+
+        // Orbital rings
+        drawRing(px, py, n.or, n.oa);
+        if (n.or2 > 0) drawRing(px, py, n.or2, n.oa2);
+
+        // Pixel body (octagon hubs, hexagon small)
+        const sides = n.isHub ? 8 : (r >= 2 ? 6 : 4);
+        ctx.beginPath();
+        for (let s = 0; s < sides; s++) {
+            const a = (s / sides) * Math.PI * 2 - Math.PI / 2;
+            ctx.lineTo(
+                Math.round(px + Math.cos(a) * r),
+                Math.round(py + Math.sin(a) * r)
+            );
+        }
+        ctx.closePath();
+        const b = Math.floor(140 + g * 110);
+        ctx.fillStyle = `rgb(${b},${b + 4},${Math.min(255, b + 20)})`;
+        ctx.fill();
+
+        // Specular pixel
+        if (r >= 3) {
+            ctx.fillStyle = 'rgba(255,255,255,0.78)';
+            ctx.fillRect(Math.round(px - r * 0.32), Math.round(py - r * 0.32), 1, 1);
+        }
+    }
+
+    // ── Scroll-driven spread
+    let spread = 1.0;
+    window._setSpread = v => { spread = v; };
+
+    // ── Animation loop
+    let t = 0;
+    function frame() {
+        t += 0.005;
+
+        nodes.forEach(n => {
+            n.oa  += n.os  * 0.013;
+            n.oa2 += n.os2 * 0.013;
+        });
+
+        const PW = canvas.width, PH = canvas.height;
+        ctx.clearRect(0, 0, PW, PH);
+
+        // Lissajous spiral drift — two incommensurate frequencies
+        const dx  = Math.sin(t * 0.26) * PW * 0.035;
+        const dy  = Math.sin(t * 0.16) * PH * 0.032;
+        const rot = Math.sin(t * 0.11) * 0.052;
+
+        ctx.save();
+        ctx.translate(PW / 2 + dx, PH / 2 + dy);
+        ctx.rotate(rot);
+        ctx.translate(-PW / 2, -PH / 2);
+
+        // Edges
+        ctx.lineWidth = 1;
+        edges.forEach(([ai, bi]) => {
+            const a = nodes[ai], b = nodes[bi];
+            const ax = Math.round((a.nx - 0.5) * PW * spread + PW / 2);
+            const ay = Math.round(a.ny * PH);
+            const bx = Math.round((b.nx - 0.5) * PW * spread + PW / 2);
+            const by = Math.round(b.ny * PH);
+            const g  = (glowOf(a, t) + glowOf(b, t)) * 0.5;
+            ctx.strokeStyle = `rgba(85,138,198,${(0.1 + g * 0.2).toFixed(2)})`;
+            ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+        });
+
+        // Signal pulses on edges
+        pulses.forEach(p => {
+            p.t = (p.t + p.speed) % 1;
+            const [ai, bi] = edges[p.edgeIdx];
+            const a = nodes[ai], b = nodes[bi];
+            const ax = Math.round((a.nx - 0.5) * PW * spread + PW / 2);
+            const ay = Math.round(a.ny * PH);
+            const bx = Math.round((b.nx - 0.5) * PW * spread + PW / 2);
+            const by = Math.round(b.ny * PH);
+            const px = Math.round(ax + (bx - ax) * p.t);
+            const py = Math.round(ay + (by - ay) * p.t);
+            ctx.fillStyle = 'rgba(185,220,255,0.75)';
+            ctx.fillRect(px, py, 1, 1);
+        });
+
+        // Nodes
+        nodes.forEach(n => drawNode(n, t, PW, PH, spread));
+
+        ctx.restore();
+        requestAnimationFrame(frame);
+    }
+    frame();
+})();
+
+// ══════════════════════════════════════════
+//  SCROLL — HUD, background, spread, reveals
+// ══════════════════════════════════════════
+const snap      = document.getElementById('snap');
+const hudItems  = document.querySelectorAll('.hud-item');
+const revealed  = new Set();
+
+function revealSection(idx) {
+    if (revealed.has(idx)) return;
+    revealed.add(idx);
+    const secs = document.querySelectorAll('.s');
+    if (!secs[idx]) return;
+    secs[idx].querySelectorAll('.entry').forEach((el, i) =>
+        setTimeout(() => el.classList.add('show'), i * 72 + 80)
+    );
+}
+revealSection(0);
+
+snap.addEventListener('scroll', () => {
+    const vh  = window.innerHeight;
+    const st  = snap.scrollTop;
+    const idx = Math.round(st / vh);
+
+    // HUD
+    hudItems.forEach((el, i) => el.classList.toggle('active', i === idx));
+
+    // Hero spread effect during snap transition
+    const progress = (st % vh) / vh;
+    if (window._setSpread) window._setSpread(1 + Math.sin(progress * Math.PI) * 0.14);
+
+    // Warm gradient: body background darkens subtly per section
+    // (0,0,0) → (28,24,16)  across 3 scroll units
+    const p = Math.min(1, st / (vh * 3));
+    const r = Math.round(p * 28), g = Math.round(p * 24), b = Math.round(p * 16);
+    document.body.style.background = `rgb(${r},${g},${b})`;
+
+    revealSection(idx);
+});
+
+// HUD clicks
+hudItems.forEach(el => {
+    el.addEventListener('click', e => {
+        e.preventDefault();
+        snap.scrollTo({ top: +el.dataset.idx * window.innerHeight, behavior: 'smooth' });
+    });
+});
 </script>
-
-            <ul>
-                <p><a href="https://github.com/koizachek" target="_blank">coding</a>, <a href="https://www.researchgate.net/profile/Diana-Kozachek" target="_blank">researching</a>, <a href="https://koizachek.substack.com/" target="_blank">thinking</a></p>
-            </ul>
-    </header>
-
-
-    <main>
-        <h2>SCIENTIFIC PUBLICATIONS</h2>
-        <ul>
-            <li><a href="https://doi.org/10.1016/j.futures.2025.103705"> Entering the Age of Hybrid Futures: A Comparative Study of Human and GPT-Generated Scenarios</a> Elsevier Futures, November 2025, DOI: 10.1016/j.futures.2025.103705</li>
-            <li><a href="https://dl.acm.org/doi/10.1145/3591196.3596827">Investigating the Perception of the Future in GPT-3, -3.5 and GPT-4,</a> C&C '23: Proceedings of the 15th Conference on Creativity and Cognition, June 2023, p. 282–287. DOI: 10.1145/3591196.3596827</li>
-            <li><a href="https://link.springer.com/chapter/10.1007/978-3-031-35599-8_16">Evaluating the Outcome of Collaborative VR Mind Mapping Sessions with Sentiment Analysis and Emotional Intelligence</a>, International Conference on Human-Computer Interaction HCII 2023: Human-Computer Interaction, p. 245–263. DOI: 10.1007/978-3-031-35599-8_16</li>
-            <li><a href="https://ieeexplore.ieee.org/document/9582644">How Pedestrians Perceive Autonomous Buses: Evaluating Visual Signals</a>, IEEE International Conference on Human-Machine Systems, ICHMS, June 2021. DOI: 10.1109/ichms53169.2021.9582644</li>
-        </ul>
-        <p>
-
-        <h2>ESSAYS</h2>
-        <ul> 
-            <li><a href=https://donotresearch.substack.com/p/diana-kozachek-synthoscene-chongqing>Sythoscene, Chongqing</a>, Do Not Research, 16.06.2025</li>
-            <li><a href="http://texturen.net/">TOKIO - Digitale Interfaces im Stadtkörper</a>, texturen Nr. 8, UdK Verlag, 2021, p. 112-126. ISBN-10, ‎3832554653</li>
-            <li><a href="http://ssdev.artsoftheworkingclass.org/edition/the-new-serenity">Arts of the Working Class</a>, Issue 17, 12 Aug 2021, Article and Artwork "Feminist Fututures"</li>
-            <li><a href="https://www.hiig.de/wp-content/uploads/2019/11/IGF-Statements-Critical-Voices-WEB.pdf">Against Prediction - The Power of Imagination in the Age of Codes and Numbers</a>, Internet Governance Forum 2019: Many Worlds, Many Nets, Many Visions, Alexander von Humboldt Institute for Internet and Society, Hans Bredow Institute, 2019</li>
-        </ul>
-        <p>
-
-        <h2>SPEAKING/TEACHING</h2>
-        <ul>
-            <li>Lecture: Developing Agentic AI Solutions for Higher Education, Universität Kassel, Germany. 18.12.2025</li>
-            <li>Keynote: <a href="https://www.fit-kongress.de/agenda-2025">Future of IT Kongress (FIT)</a>, Entering the Age of Agentic AI, Augsburg, Germany 27.11.2025.</li>
-            <li>Workshop: Women in IT Roundtable, Agentic AI Implementation, Switzerland 14.11.2025.</li>
-            <li>Workshop: <a href="https://www.cais-research.de/creating-spaces-for-digital-futures-program/">Center for Advanced Internet Studies (CAIS)</a>, Building AI Agents for Public Good, Bochum, Germany 10.10.2025.</li>
-            <li>Workshop: <a href="https://iwi.unisg.ch/en/newsuebersicht/news-detail/news/women-in-it-bruecken-zwischen-wissenschaft-und-praxis/">Women in IT Roundtable</a>, Human-Centric Agentic AI Development, Switzerland 19.05.2025.</li>
-            <li>Seminar: <a href="https://iwi.unisg.ch/de/lehrstuehle/lehrstuhl-prof-dr-marco-leimeister/">Implementing AI Agents as a Service</a>, St. Gallen, Switzerland April-May 2025.</li>
-            <li>Seminar: Co-Creating Multi-Modal AI Agents for Intelligent Interfaces, NTUT, Taipei, Taiwan 14.01.2025-16.01.2025.</li>
-            <li>Panel:<a href="https://www.linkedin.com/company/sherewires/">Immersive Technologies and Spatial Intelligence</a>, Sherewires, Shanghai, China. 16.11.2024.</li>
-            <li>Keynote:<a href="https://www.youtube.com/watch?v=6JDa95FZvGQ&t=17s">What doe European Futures look like according to Generative AI?</a>, WFSF 2023, World Future Studies Conference, Paris, France. 26.10.2023.</li>
-            <li>Keynote:<a href="https://2023.hci.international/HCI-program.html">Evaluating the Outcome of Collaborative VR Mind Mapping Sessions with Sentiment Analysis and Emotional Intelligence</a>, HCII 2023, 25th International Conference on Human-Computer Interaction, Copenhagen, Denmark 26.07.2023.</li>
-            <li>Seminar: Automating the Scenario Methodology with Large Language Models. Freie University, Berlin, Germany. 21.07.2023.</li>
-            <li>Keynote: <a href="https://programs.sigchi.org/c&c/2023/authors/116708">Investigating the Perception of Time in GPT-3, -3.5 and GPT-4</a>, C&C'2023, SIGCHI ACM Conference on Creativity & Cognition 2023, Virtual Event. 20.06.2023.</li>
-            <li>Seminar: Evaluating Design Prototypes with Large Language Models. National Taipei University of Technology, Taipei, Taiwan 06.10.2022.</li>
-            <li>Lecture: <a href="https://www.wissenschaftsjahr.de/2019/ki-camp/speakerinnen/index.html">Evaluating AI in Terms of Sustainability</a> Artificial Intelligence Camp (KI-Camp), Berlin, Germany. 05.12.2019</li>
-        </ul>
-        <p>
-        
-        <h2>PROJECTS</h2>
-        <ul>
-            <li>Chongqching, Synthoscene. A non-fiction book  to be published in 2027 (Work in Progress)</li>
-            <li><a href="https://2038.xyz/">2038 – The New Serenity</a>. Research and Text. 2038 is a story between fact and fiction in Form of short films told from the future, showcased at the German Pavilion at the 17th International Architecture Exhibition — La Biennale di Venezia </li>
-            <li><a href="https://feministfutures.net/">Feminist Futures Archive</a> is an ongoing participatory art project that initiates, creates and archives science fiction stories of a feminist internet. In workshops, talks and exhibitions, imagination and narration serve as tools for public engagement in technological processes</li>
-        </ul>
-        <p>
-        </ul>
-        <h2>READING</h2>
-        <ul>
-            <li><a href="https://www.cs.ucdavis.edu/~koehl/Teaching/ECS188/PDF_files/Machine_stops.pdf">The Machine Stops.</a> Edward Morgan Foster. 1909</li>
-            <li><a href="https://www.sidis.net/animate.pdf">The Relation between the Tendencies. in: The Animate and the Inanimate</a>. William James Sidis. 1925</li>
-            <li><a href="https://misq.umn.edu/skin/frontend/default/misq/pdf/V45I1/15887_SI_BaygiIntrona.pdf">Everything Flows: Studying Continuous Socio-Technological Transformation in a Fluid and Dynamic Digital World.</a> Reza Mousavi Baygi, Lucas Introna and Lotta Hultin. 2020.</li>
-        </ul>
-        <p>
-        </ul>
-        <p>
-    </main>
-    <footer>
-        
-        <p>&copy; 2025 Diana Kozachek.</p>
-    </footer>
 </body>
 </html>
-
-<script>
-    function reloadPage() {
-        location.reload();
-    }
-</script>
