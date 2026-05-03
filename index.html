@@ -444,7 +444,7 @@ document.querySelectorAll('a,.hud-item').forEach(el => {
     const group = new THREE.Group();
     scene.add(group);
 
-    const nodes=[], nodeMeshes=[], activeNodes=[], links=[];
+    const nodes=[], nodeMeshes=[], activeNodes=[], links=[], linkPulseMaterials=[], trailParticles=[];
     const rand = (min,max) => min + Math.random()*(max-min);
 
     function makeBlobGeometry(radius, irregularity=0.22){
@@ -584,11 +584,43 @@ document.querySelectorAll('a,.hud-item').forEach(el => {
             new THREE.Vector3(b.x,b.y,b.z),
         ];
         const curve = new THREE.CatmullRomCurve3(points);
-        const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(18));
-        const mat = new THREE.LineBasicMaterial({ color:0xcfcfcf, transparent:true, opacity });
+        const curvePoints = curve.getPoints(32);
+        const geo = new THREE.BufferGeometry().setFromPoints(curvePoints);
+        const mat = new THREE.LineBasicMaterial({
+            color: 0xd8d8d8,
+            transparent: true,
+            opacity,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+        });
         const line = new THREE.Line(geo, mat);
         group.add(line);
         links.push(line);
+
+        // Beads — pulsing dots along the connection curve
+        const beadCount = 10;
+        const beadPositions = new Float32Array(beadCount * 3);
+        for(let i=0;i<beadCount;i++){
+            const p = curve.getPoint(i/(beadCount-1));
+            beadPositions[i*3]   = p.x;
+            beadPositions[i*3+1] = p.y;
+            beadPositions[i*3+2] = p.z;
+        }
+        const beadGeo = new THREE.BufferGeometry();
+        beadGeo.setAttribute('position', new THREE.BufferAttribute(beadPositions, 3));
+        const beadMat = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.055,
+            transparent: true,
+            opacity: opacity * 1.8,
+            sizeAttenuation: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+        });
+        const beads = new THREE.Points(beadGeo, beadMat);
+        beads.userData = { phase: rand(0, Math.PI*2), opacity: opacity * 1.8 };
+        group.add(beads);
+        linkPulseMaterials.push(beads);
     }
     for(let i=1;i<nodes.length;i++){
         addLink(nodes[i-1], nodes[i], 0.26);
@@ -620,6 +652,56 @@ document.querySelectorAll('a,.hud-item').forEach(el => {
     });
     const particles = new THREE.Points(particleGeo, particleMat);
     group.add(particles);
+
+    // ── Trail spray (the falling pixel-dust below the spiral)
+    const tailCount = 1700;
+    const tailPositions = new Float32Array(tailCount*3);
+    const tailSizes = new Float32Array(tailCount);
+    const tailSeeds = [];
+    for(let i=0;i<tailCount;i++){
+        const tt = Math.pow(Math.random(), 0.55);
+        const angle = tt*Math.PI*2*turns - 1.2;
+        const fade = 1.0 - tt;
+        const radius = 2.2 + tt*7.5 + rand(-0.6, 1.2);
+        tailPositions[i*3]   = Math.cos(angle)*radius + rand(-0.45, 0.45);
+        tailPositions[i*3+1] = (tt-0.52)*height - 5.8 + rand(-1.1, 1.1);
+        tailPositions[i*3+2] = Math.sin(angle)*radius + rand(-1.4, 1.4);
+        tailSizes[i] = 0.014 + fade * rand(0.018, 0.052);
+        tailSeeds.push({ phase: rand(0,100), speed: rand(0.15, 0.55), fade });
+    }
+    const tailGeometry = new THREE.BufferGeometry();
+    tailGeometry.setAttribute('position', new THREE.BufferAttribute(tailPositions, 3));
+    tailGeometry.setAttribute('size', new THREE.BufferAttribute(tailSizes, 1));
+    const tailMaterial = new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        uniforms: { uTime: { value: 0 } },
+        vertexShader: `
+            attribute float size;
+            varying float vAlpha;
+            void main(){
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                float depthFade = smoothstep(-40.0, 8.0, mvPosition.z);
+                vAlpha = depthFade;
+                gl_PointSize = size * (300.0 / -mvPosition.z);
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `,
+        fragmentShader: `
+            varying float vAlpha;
+            void main(){
+                vec2 p = gl_PointCoord - vec2(0.5);
+                float d = length(p);
+                float pixel = step(0.08, 0.5 - d);
+                float alpha = smoothstep(0.5, 0.08, d) * vAlpha * 0.68;
+                gl_FragColor = vec4(vec3(1.0), alpha * pixel);
+            }
+        `,
+    });
+    const tail = new THREE.Points(tailGeometry, tailMaterial);
+    group.add(tail);
+    trailParticles.push({ tail, tailGeometry, tailSeeds });
 
     const orbitGroup = new THREE.Group();
     group.add(orbitGroup);
@@ -677,7 +759,23 @@ document.querySelectorAll('a,.hud-item').forEach(el => {
         }
         pos.needsUpdate = true;
         links.forEach((line, i) => {
-            line.material.opacity = 0.11 + Math.sin(time*0.9 + i*0.37)*0.035;
+            line.material.opacity = 0.16 + Math.sin(time*1.15 + i*0.37)*0.055;
+        });
+        linkPulseMaterials.forEach((beads) => {
+            beads.material.opacity = beads.userData.opacity * (0.45 + 0.45 * Math.sin(time*2.4 + beads.userData.phase));
+            beads.rotation.z += 0.0015;
+        });
+        trailParticles.forEach(({ tail, tailGeometry, tailSeeds }) => {
+            tail.material.uniforms.uTime.value = time;
+            const tp = tailGeometry.attributes.position;
+            for(let i=0;i<tailSeeds.length;i++){
+                const seed = tailSeeds[i];
+                const ix = i*3;
+                tp.array[ix]   += Math.sin(time*seed.speed + seed.phase)*0.0025*seed.fade;
+                tp.array[ix+1] += 0.0022*seed.fade;
+                tp.array[ix+2] += Math.cos(time*seed.speed + seed.phase)*0.0025*seed.fade;
+            }
+            tp.needsUpdate = true;
         });
         orbitGroup.rotation.y = -time*0.07;
         renderer.render(scene, camera);
