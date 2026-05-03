@@ -615,27 +615,27 @@ document.querySelectorAll('a,.hud-item').forEach(el => {
         beadGeo.setAttribute('position', new THREE.BufferAttribute(beadPositions, 3));
         const beadMat = new THREE.PointsMaterial({
             color: 0xffffff,
-            size: 0.055,
+            size: 0.10,
             transparent: true,
-            opacity: opacity * 1.8,
+            opacity: opacity * 2.4,
             sizeAttenuation: true,
             depthWrite: false,
             blending: THREE.AdditiveBlending,
         });
         const beads = new THREE.Points(beadGeo, beadMat);
-        beads.userData = { phase: rand(0, Math.PI*2), opacity: opacity * 1.8 };
+        beads.userData = { phase: rand(0, Math.PI*2), opacity: opacity * 2.4 };
         group.add(beads);
         linkPulseMaterials.push(beads);
     }
     for(let i=1;i<nodes.length;i++){
-        addLink(nodes[i-1], nodes[i], 0.26);
-        if(i>3 && Math.random()>0.48) addLink(nodes[i-3], nodes[i], 0.18);
-        if(i>8 && Math.random()>0.72) addLink(nodes[i-8], nodes[i], 0.13);
+        addLink(nodes[i-1], nodes[i], 0.55);
+        if(i>3 && Math.random()>0.48) addLink(nodes[i-3], nodes[i], 0.40);
+        if(i>8 && Math.random()>0.72) addLink(nodes[i-8], nodes[i], 0.30);
     }
     for(let i=0;i<15;i++){
         const a = nodes[Math.floor(rand(0,nodes.length))];
         const b = nodes[Math.floor(rand(0,nodes.length))];
-        if(Math.abs(a.id-b.id)>10) addLink(a,b,0.12);
+        if(Math.abs(a.id-b.id)>10) addLink(a,b,0.28);
     }
 
     const particleCount = 5200;
@@ -764,10 +764,10 @@ document.querySelectorAll('a,.hud-item').forEach(el => {
         }
         pos.needsUpdate = true;
         links.forEach((line, i) => {
-            line.material.opacity = 0.16 + Math.sin(time*1.15 + i*0.37)*0.055;
+            line.material.opacity = 0.38 + Math.sin(time*1.15 + i*0.37)*0.10;
         });
         linkPulseMaterials.forEach((beads) => {
-            beads.material.opacity = beads.userData.opacity * (0.45 + 0.45 * Math.sin(time*2.4 + beads.userData.phase));
+            beads.material.opacity = beads.userData.opacity * (0.6 + 0.4 * Math.sin(time*2.4 + beads.userData.phase));
             beads.rotation.z += 0.0015;
         });
         trailParticles.forEach(({ tail, tailGeometry, tailSeeds }) => {
