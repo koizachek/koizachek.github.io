@@ -7,6 +7,7 @@
     <link rel="icon" href="https://raw.githubusercontent.com/koizachek/koizachek.github.io/aiportraits/favicon.ico" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
     <style>
         @font-face {
             font-family: 'Neco-Black';
@@ -64,15 +65,15 @@
         }
         #cursor.big { width: 30px; height: 30px; }
 
-        /* Fixed canvas — behind everything */
-        #net-canvas {
-            position: fixed; inset: 0;
+        /* Three.js mount — fixed, behind everything */
+        #hero-mount {
+            position: fixed;
+            inset: 0;
             width: 100%; height: 100%;
             z-index: 1;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
             pointer-events: none;
         }
+        #hero-mount canvas { display: block; }
 
         /* Snap scroll */
         .snap-wrap {
@@ -253,7 +254,8 @@
 <body>
 
 <div id="cursor"></div>
-<canvas id="net-canvas"></canvas>
+<div id="hero-mount"></div>
+
 
 <nav id="hud">
     <a class="hud-item active" data-idx="0" href="#">HOME</a>
@@ -421,314 +423,273 @@ document.querySelectorAll('a,.hud-item').forEach(el => {
 })();
 
 // ════════════════════════════════════════════════════════
-//  ORBITAL NETWORK  —  bullseye blobs on rotating helix
+//  THREE.JS  — Spiral Agent Network (96 procedural blobs)
 // ════════════════════════════════════════════════════════
 (function(){
-    const canvas = document.getElementById('net-canvas');
-    const ctx = canvas.getContext('2d');
-    const SCALE = 2;
+    const mount = document.getElementById('hero-mount');
+    if(!mount || typeof THREE === 'undefined') return;
 
-    function resize(){
-        canvas.width  = Math.max(1, Math.floor(window.innerWidth  / SCALE));
-        canvas.height = Math.max(1, Math.floor(window.innerHeight / SCALE));
-    }
-    resize();
-    window.addEventListener('resize', resize);
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050505, 0.035);
 
-    // ── Node: bullseye rings (inner concentric) + outer orbital ellipses
-    function mkNode(x3, y, z3, r, innerRings, numOrbits){
-        const seed = Math.abs(x3*7.31 + y*13.13 + z3*5.71);
-        const orbits = [];
-        for(let i=0; i<numOrbits; i++){
-            const flat = 0.15 + (i / Math.max(1,numOrbits-1)) * 0.78;
-            const rot  = (seed*1.7 + i * (Math.PI / Math.max(1,numOrbits))) % Math.PI;
-            const baseR = r * (2.4 + i*0.85);
-            orbits.push({
-                r: baseR, flat, rot,
-                satA: (seed*2.1 + i*1.9) % (Math.PI*2),
-                satS: (i%2 ? 1 : -1) * (0.4 + (i%4)*0.12),
-            });
+    const camera = new THREE.PerspectiveCamera(45, mount.clientWidth/mount.clientHeight, 0.1, 1000);
+    camera.position.set(0, 0, 28);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    renderer.setClearColor(0x050505, 1);
+    mount.appendChild(renderer.domElement);
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    const nodes=[], nodeMeshes=[], activeNodes=[], links=[];
+    const rand = (min,max) => min + Math.random()*(max-min);
+
+    function makeBlobGeometry(radius, irregularity=0.22){
+        const geo = new THREE.IcosahedronGeometry(radius, 3);
+        const pos = geo.attributes.position;
+        const v = new THREE.Vector3();
+        for(let i=0;i<pos.count;i++){
+            v.fromBufferAttribute(pos, i);
+            const n = 1 + irregularity * (Math.sin(v.x*3.1)+Math.sin(v.y*4.7)+Math.sin(v.z*5.3))/3;
+            v.multiplyScalar(n);
+            pos.setXYZ(i, v.x, v.y, v.z);
         }
-        return {
-            x3, y, z3, r,
-            phase: (seed*3.7) % (Math.PI*2),
-            ps:    0.28 + (seed % 1) * 0.85,
-            innerRings,
-            orbits,
-        };
+        geo.computeVertexNormals();
+        return geo;
     }
 
-    const nodes=[], edges=[], hubIdx=[];
+    function createGlowSprite(size, opacity){
+        const c = document.createElement('canvas');
+        c.width=128; c.height=128;
+        const ctx = c.getContext('2d');
+        const g = ctx.createRadialGradient(64,64,0,64,64,64);
+        g.addColorStop(0,'rgba(255,255,255,1)');
+        g.addColorStop(0.18,'rgba(255,255,255,0.75)');
+        g.addColorStop(0.45,'rgba(180,180,180,0.25)');
+        g.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.fillStyle=g; ctx.fillRect(0,0,128,128);
+        const tex = new THREE.CanvasTexture(c);
+        const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, opacity, depthWrite:false, blending:THREE.AdditiveBlending });
+        const sp = new THREE.Sprite(mat);
+        sp.scale.set(size,size,1);
+        return sp;
+    }
 
-    // ── 5 major hubs on double-helix spine — 9 bullseye rings + 4 outer orbits
-    const HR = 0.22;
-    const HUB_U = [0.05, 0.26, 0.50, 0.74, 0.95];
-    HUB_U.forEach((u, hi)=>{
-        const ang  = u * Math.PI * 5;
-        const side = hi % 2;
-        const x3   = Math.cos(ang + side*Math.PI) * HR;
-        const z3   = Math.sin(ang + side*Math.PI) * HR;
-        const r    = 14 + (hi===2 ? 3 : 0);   // bigger blobs
-        hubIdx.push(nodes.length);
-        nodes.push(mkNode(x3, u, z3, r, 9, 4));   // 9 inner rings, 4 outer orbits
+    function makeDetailedBlobMaterial({ shade=0.55, active=false, seed=0 }){
+        return new THREE.ShaderMaterial({
+            transparent:false,
+            uniforms:{
+                uTime:{ value:0 },
+                uShade:{ value:shade },
+                uActive:{ value:active?1.0:0.0 },
+                uSeed:{ value:seed },
+            },
+            vertexShader: `
+                varying vec3 vPos;
+                varying vec3 vNormal;
+                varying vec2 vUv;
+                void main(){
+                    vPos = position;
+                    vNormal = normalize(normalMatrix * normal);
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime;
+                uniform float uShade;
+                uniform float uActive;
+                uniform float uSeed;
+                varying vec3 vPos;
+                varying vec3 vNormal;
+                varying vec2 vUv;
+                float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123); }
+                float noise(vec2 p){
+                    vec2 i = floor(p);
+                    vec2 f = fract(p);
+                    float a = hash(i);
+                    float b = hash(i+vec2(1.0,0.0));
+                    float c = hash(i+vec2(0.0,1.0));
+                    float d = hash(i+vec2(1.0,1.0));
+                    vec2 u = f*f*(3.0-2.0*f);
+                    return mix(a,b,u.x) + (c-a)*u.y*(1.0-u.x) + (d-b)*u.x*u.y;
+                }
+                void main(){
+                    vec2 pixelUv = floor(vUv*96.0)/96.0;
+                    vec2 center = vec2(0.5);
+                    float d = distance(pixelUv, center);
+                    float angle = atan(pixelUv.y-0.5, pixelUv.x-0.5);
+                    float rings = smoothstep(0.42, 0.0, abs(sin(d*72.0 + uSeed*3.0)));
+                    float spokes = smoothstep(0.84, 1.0, abs(sin(angle*10.0 + uSeed)));
+                    float grain = noise(pixelUv*80.0 + uSeed);
+                    float micro = step(0.62, grain);
+                    float dither = step(fract((gl_FragCoord.x + gl_FragCoord.y)*0.5), uShade + grain*0.22);
+                    float light = dot(normalize(vNormal), normalize(vec3(0.3,0.45,1.0)))*0.5 + 0.5;
+                    float structure = rings*0.24 + spokes*0.12 + micro*0.17;
+                    float glow = uActive * (0.35 + 0.22*sin(uTime*3.0 + uSeed)) * smoothstep(0.52, 0.0, d);
+                    float value = uShade*0.65 + light*0.24 + structure + glow;
+                    value *= mix(0.72, 1.12, dither);
+                    value = clamp(value, 0.02, 1.0);
+                    gl_FragColor = vec4(vec3(value), 1.0);
+                }
+            `,
+        });
+    }
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+    const keyLight = new THREE.PointLight(0xffffff, 2.8, 80);
+    keyLight.position.set(4,4,12); scene.add(keyLight);
+    const backLight = new THREE.PointLight(0xffffff, 1.4, 80);
+    backLight.position.set(-8,-6,-12); scene.add(backLight);
+
+    const totalNodes = 96, turns = 3.35, height = 24;
+    for(let i=0;i<totalNodes;i++){
+        const t = i/(totalNodes-1);
+        const angle = t*Math.PI*2*turns;
+        const spiralRadius = 2.1 + Math.sin(t*Math.PI*3)*1.0 + rand(-0.75, 1.6);
+        const x = Math.cos(angle)*spiralRadius + rand(-1.6,1.6);
+        const y = (t-0.5)*height + rand(-0.55,0.55);
+        const z = Math.sin(angle)*spiralRadius + rand(-2.4,2.4);
+        const r = rand(0.09, 0.42) * (Math.random()>0.84 ? rand(1.5,2.4) : 1);
+        const active = Math.random()>0.84;
+        const shade = Math.random();
+        nodes.push({ id:i, x,y,z,r, active, angle, t });
+        const material = makeDetailedBlobMaterial({
+            shade: active ? rand(0.72,0.92)
+                 : shade<0.45 ? rand(0.12,0.28)
+                 : shade<0.78 ? rand(0.38,0.58)
+                 : rand(0.62,0.78),
+            active, seed: rand(0,1000),
+        });
+        const mesh = new THREE.Mesh(makeBlobGeometry(r, rand(0.13,0.36)), material);
+        mesh.position.set(x,y,z);
+        mesh.userData = { baseScale: rand(0.85,1.2), pulse: rand(0.5,1.4), active };
+        group.add(mesh);
+        nodeMeshes.push(mesh);
+        if(active){
+            const glow = createGlowSprite(r*rand(5.5,8.0), rand(0.22,0.42));
+            glow.position.set(x,y,z);
+            group.add(glow);
+            activeNodes.push({ mesh, glow, phase: rand(0, Math.PI*2), base: r });
+        }
+    }
+
+    function addLink(a, b, opacity=0.38){
+        const points = [
+            new THREE.Vector3(a.x,a.y,a.z),
+            new THREE.Vector3((a.x+b.x)/2 + rand(-0.25,0.25), (a.y+b.y)/2 + rand(-0.15,0.15), (a.z+b.z)/2 + rand(-0.25,0.25)),
+            new THREE.Vector3(b.x,b.y,b.z),
+        ];
+        const curve = new THREE.CatmullRomCurve3(points);
+        const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(18));
+        const mat = new THREE.LineBasicMaterial({ color:0xcfcfcf, transparent:true, opacity });
+        const line = new THREE.Line(geo, mat);
+        group.add(line);
+        links.push(line);
+    }
+    for(let i=1;i<nodes.length;i++){
+        addLink(nodes[i-1], nodes[i], 0.26);
+        if(i>3 && Math.random()>0.48) addLink(nodes[i-3], nodes[i], 0.18);
+        if(i>8 && Math.random()>0.72) addLink(nodes[i-8], nodes[i], 0.13);
+    }
+    for(let i=0;i<15;i++){
+        const a = nodes[Math.floor(rand(0,nodes.length))];
+        const b = nodes[Math.floor(rand(0,nodes.length))];
+        if(Math.abs(a.id-b.id)>10) addLink(a,b,0.12);
+    }
+
+    const particleCount = 5200;
+    const particlePositions = new Float32Array(particleCount*3);
+    const particleSeeds = [];
+    for(let i=0;i<particleCount;i++){
+        const t = Math.random();
+        const angle = t*Math.PI*2*turns + rand(-0.6,0.6);
+        const radius = rand(1.1,5.4) + Math.sin(t*Math.PI*4)*rand(0.1,1.1);
+        particlePositions[i*3]   = Math.cos(angle)*radius + rand(-1.3,1.3);
+        particlePositions[i*3+1] = (t-0.5)*height + rand(-2.2,2.2);
+        particlePositions[i*3+2] = Math.sin(angle)*radius + rand(-2.2,2.2);
+        particleSeeds.push({ speed: rand(0.08,0.34), phase: rand(0,100), amp: rand(0.02,0.16) });
+    }
+    const particleGeo = new THREE.BufferGeometry();
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+        color:0xe4e4e4, size:0.026, transparent:true, opacity:0.62, sizeAttenuation:true, depthWrite:false,
     });
-    for(let i=0;i<hubIdx.length-1;i++) edges.push([hubIdx[i],hubIdx[i+1]]);
-    [[0,2],[1,3],[2,4],[0,3]].forEach(([a,b])=>edges.push([hubIdx[a],hubIdx[b]]));
+    const particles = new THREE.Points(particleGeo, particleMat);
+    group.add(particles);
 
-    // ── Strand nodes — 5 bullseye rings + 2 outer orbits
-    const STRAND_U = [0.13,0.18, 0.34,0.40, 0.44,0.58,0.62, 0.66,0.82,0.86];
-    const strandIdx=[];
-    STRAND_U.forEach((u, si)=>{
-        const ang  = u * Math.PI * 5;
-        const side = si % 2;
-        const x3   = Math.cos(ang + side*Math.PI) * HR;
-        const z3   = Math.sin(ang + side*Math.PI) * HR;
-        const r    = 7 + (si%3===0?1:0);   // bigger strand blobs
-        const idx  = nodes.length;
-        strandIdx.push(idx);
-        nodes.push(mkNode(x3, u, z3, r, 5, 2));
+    const orbitGroup = new THREE.Group();
+    group.add(orbitGroup);
+    function addOrbit(y, radiusX, radiusZ, rot, opacity){
+        const points = [];
+        for(let i=0;i<=180;i++){
+            const a = (i/180)*Math.PI*2;
+            points.push(new THREE.Vector3(Math.cos(a)*radiusX, y + Math.sin(a*2)*0.18, Math.sin(a)*radiusZ));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineDashedMaterial({ color:0xbfbfbf, transparent:true, opacity, dashSize:0.08, gapSize:0.08 });
+        const line = new THREE.Line(geo, mat);
+        line.computeLineDistances();
+        line.rotation.y = rot;
+        orbitGroup.add(line);
+    }
+    addOrbit( 7.5, 7.2, 2.2,  0.3, 0.28);
+    addOrbit( 1.2, 6.1, 2.7, -0.8, 0.22);
+    addOrbit(-5.4, 5.2, 2.4,  0.9, 0.20);
+    addOrbit(-9.0, 4.4, 1.7, -0.35,0.16);
+
+    // Scroll progress comes from the snap container
+    let scrollProgress = 0;
+    window._setScrollProgress = p => { scrollProgress = p; };
+
+    const clock = new THREE.Clock();
+    function animate(){
+        const time = clock.getElapsedTime();
+        const pos = particleGeo.attributes.position;
+
+        group.rotation.y = time*0.055 + scrollProgress*1.8;
+        group.rotation.x = Math.sin(time*0.13)*0.055 + scrollProgress*0.24;
+        group.position.y = (scrollProgress - 0.5)*3.2;
+
+        nodeMeshes.forEach((mesh, i) => {
+            if(mesh.material?.uniforms?.uTime) mesh.material.uniforms.uTime.value = time;
+            const pulse = mesh.userData.active
+                ? Math.sin(time*2.6 + mesh.userData.pulse)*0.08
+                : Math.sin(time*0.9 + i)*0.025;
+            const s = mesh.userData.baseScale + pulse;
+            mesh.scale.setScalar(s);
+            mesh.rotation.x += 0.002 + i*0.000004;
+            mesh.rotation.y += 0.003;
+        });
+        activeNodes.forEach(({ glow, phase, base }) => {
+            const p = 1 + Math.sin(time*2.6 + phase)*0.16;
+            glow.scale.setScalar(base*6.4*p);
+            glow.material.opacity = 0.22 + Math.sin(time*2.2 + phase)*0.1;
+        });
+        for(let i=0;i<particleCount;i++){
+            const seed = particleSeeds[i];
+            const ix = i*3;
+            pos.array[ix]   += Math.sin(time*seed.speed + seed.phase)*seed.amp*0.006;
+            pos.array[ix+2] += Math.cos(time*seed.speed + seed.phase)*seed.amp*0.006;
+        }
+        pos.needsUpdate = true;
+        links.forEach((line, i) => {
+            line.material.opacity = 0.11 + Math.sin(time*0.9 + i*0.37)*0.035;
+        });
+        orbitGroup.rotation.y = -time*0.07;
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = mount.clientWidth/mount.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(mount.clientWidth, mount.clientHeight);
     });
-    strandIdx.forEach(si=>{
-        const n=nodes[si];
-        let best=hubIdx[0], bestD=Infinity;
-        hubIdx.forEach(hi=>{
-            const h=nodes[hi];
-            const d=(n.x3-h.x3)**2+(n.y-h.y)**2+(n.z3-h.z3)**2;
-            if(d<bestD){bestD=d;best=hi;}
-        });
-        edges.push([best,si]);
-    });
-    for(let i=0;i<strandIdx.length-1;i++) edges.push([strandIdx[i],strandIdx[i+1]]);
-
-    // ── Micro satellites — 2 bullseye rings + 1 outer orbit
-    HUB_U.forEach((u, hi)=>{
-        const hub=nodes[hubIdx[hi]];
-        const count = 6 + (hi%2);
-        for(let m=0; m<count; m++){
-            const ang  = (m/count)*Math.PI*2 + hi*0.7;
-            const d    = 0.05 + (m%3)*0.015;
-            const vert = ((m%5)-2)*0.025;
-            const x3   = hub.x3 + Math.cos(ang)*d;
-            const z3   = hub.z3 + Math.sin(ang)*d;
-            const y    = Math.max(0.01, Math.min(0.99, hub.y + vert));
-            const idx  = nodes.length;
-            nodes.push(mkNode(x3, y, z3, 1+(m%2), 2, 1));
-            edges.push([hubIdx[hi], idx]);
-            if(m>0) edges.push([idx-1, idx]);
-        }
-    });
-
-    // ── 3 large sweeping ellipses (the big arcs spanning the composition)
-    const SWEEPS = [
-        {cx:.49,cy:.21,rx:.36,ry:.090,tilt:-.28,a:0,   s:.005},
-        {cx:.51,cy:.50,rx:.42,ry:.115,tilt: .22,a:2.1, s:.004},
-        {cx:.48,cy:.79,rx:.34,ry:.080,tilt:-.18,a:4.2, s:.006},
-    ];
-
-    // ── Signal pulses on edges
-    const pulses = edges
-        .map((e,i)=>i%4===0?{ei:i,t:(i*.37)%1,spd:.0014+(i%9)*.0005}:null)
-        .filter(Boolean);
-
-    function glowOf(n,t){
-        return Math.max(.1, Math.min(1,
-            .45 + Math.sin(t*n.ps+n.phase)*.32
-               + Math.sin(t*n.ps*1.71+n.phase*.87)*.13
-        ));
-    }
-
-    function proj(n, rot){
-        const c=Math.cos(rot), s=Math.sin(rot);
-        const nx = .5 + (n.x3*c - n.z3*s) * .85;
-        const depth = n.x3*s + n.z3*c;
-        return { nx, ny: n.y, depth };
-    }
-
-    // ── Draw a single dotted circle (every pixel of circumference)
-    function dotCircle(cx, cy, r, alpha){
-        const PW=canvas.width, PH=canvas.height;
-        const n = Math.max(4, Math.ceil(r*Math.PI*2));
-        for(let i=0;i<n;i++){
-            const a=(i/n)*Math.PI*2;
-            const x=Math.round(cx+Math.cos(a)*r);
-            const y=Math.round(cy+Math.sin(a)*r);
-            if(x>=0&&y>=0&&x<PW&&y<PH){
-                ctx.fillStyle=`rgba(220,232,250,${alpha.toFixed(3)})`;
-                ctx.fillRect(x,y,1,1);
-            }
-        }
-    }
-
-    // ── Draw dotted ellipse (orbital path) with a satellite
-    function dotEllipse(cx, cy, majorR, minorR, rot, satA, alpha){
-        const PW=canvas.width, PH=canvas.height;
-        const cR=Math.cos(rot), sR=Math.sin(rot);
-        const pts = Math.max(6, Math.ceil((majorR + Math.abs(minorR))*Math.PI));
-        for(let i=0;i<pts;i++){
-            const a=(i/pts)*Math.PI*2;
-            const ex=Math.cos(a)*majorR;
-            const ey=Math.sin(a)*minorR;
-            const x=Math.round(cx + ex*cR - ey*sR);
-            const y=Math.round(cy + ex*sR + ey*cR);
-            if(x>=0&&y>=0&&x<PW&&y<PH){
-                ctx.fillStyle=`rgba(175,198,232,${alpha.toFixed(3)})`;
-                ctx.fillRect(x,y,1,1);
-            }
-        }
-        // Satellite (a brighter dot at its current position on the ellipse)
-        const ex2=Math.cos(satA)*majorR, ey2=Math.sin(satA)*minorR;
-        const sx=Math.round(cx + ex2*cR - ey2*sR);
-        const sy=Math.round(cy + ex2*sR + ey2*cR);
-        if(sx>=0&&sy>=0&&sx<PW&&sy<PH){
-            ctx.fillStyle='rgba(235,245,255,.95)';
-            ctx.fillRect(sx-1,sy-1,2,2);
-        }
-    }
-
-    // ── BLOB: tightly-packed bullseye rings + bright star center
-    function drawBlob(cx, cy, R, n, glow){
-        // Soft halo around blob
-        const haloLayers = R>=10 ? 4 : R>=6 ? 3 : 2;
-        for(let l=haloLayers; l>=1; l--){
-            const gr = R * 1.3 + l * 6;
-            ctx.beginPath();
-            ctx.arc(cx, cy, gr, 0, Math.PI*2);
-            ctx.fillStyle = `rgba(220,235,255,${(glow*0.13/l).toFixed(3)})`;
-            ctx.fill();
-        }
-
-        // Bullseye: tightly-packed concentric rings, all bright
-        // step = ~1.5 px so 9 rings cover ~13.5 px around center
-        const step = R >= 12 ? 1.55 : R >= 6 ? 1.45 : 1.35;
-        for(let i=1; i<=n.innerRings; i++){
-            const rr = i * step;
-            // Alpha decays linearly but stays visible
-            const fade = 1 - (i / (n.innerRings+1)) * 0.55;
-            const alpha = (0.85 + glow*0.15) * fade;
-            dotCircle(cx, cy, rr, alpha);
-        }
-
-        // Bright star core (3-pixel solid block)
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(cx-1, cy-1, 2, 2);
-        if(R >= 8){
-            // 8-bit star with 2-step plus-sign rays
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.fillRect(cx-3, cy, 1, 1); ctx.fillRect(cx+2, cy, 1, 1);
-            ctx.fillRect(cx, cy-3, 1, 1); ctx.fillRect(cx, cy+2, 1, 1);
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.fillRect(cx-4, cy, 1, 1); ctx.fillRect(cx+3, cy, 1, 1);
-            ctx.fillRect(cx, cy-4, 1, 1); ctx.fillRect(cx, cy+3, 1, 1);
-        } else if(R >= 4){
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.fillRect(cx-2, cy, 1, 1); ctx.fillRect(cx+1, cy, 1, 1);
-            ctx.fillRect(cx, cy-2, 1, 1); ctx.fillRect(cx, cy+1, 1, 1);
-        }
-    }
-
-    // ── Draw outer orbits AROUND a blob (separate from bullseye)
-    function drawNodeOrbits(cx, cy, n, scale, rot3D){
-        const baseAlpha = n.r >= 8 ? 0.32 : n.r >= 4 ? 0.26 : 0.18;
-        n.orbits.forEach(orb=>{
-            const effRot = orb.rot + rot3D * 0.30;
-            const majR = orb.r * scale;
-            const minR = orb.r * orb.flat * scale;
-            dotEllipse(cx, cy, majR, minR, effRot, orb.satA, baseAlpha);
-        });
-    }
-
-    function drawSweep(s, PW, PH){
-        const cx=s.cx*PW, cy=s.cy*PH;
-        const rx=s.rx*PW, ry=s.ry*PH;
-        const cT=Math.cos(s.tilt),sT=Math.sin(s.tilt);
-        const pts=Math.ceil((rx+ry)*Math.PI);
-        for(let i=0;i<pts;i++){
-            const a=(i/pts)*Math.PI*2;
-            const ex=Math.cos(a)*rx,ey=Math.sin(a)*ry;
-            const x=Math.round(cx+ex*cT-ey*sT);
-            const y=Math.round(cy+ex*sT+ey*cT);
-            if(x>=0&&y>=0&&x<PW&&y<PH){
-                ctx.fillStyle='rgba(150,180,218,.16)';
-                ctx.fillRect(x,y,1,1);
-            }
-        }
-        s.a += s.s;
-        const ex2=Math.cos(s.a)*rx,ey2=Math.sin(s.a)*ry;
-        const dx=Math.round(cx+ex2*cT-ey2*sT);
-        const dy=Math.round(cy+ex2*sT+ey2*cT);
-        if(dx>=0&&dy>=0&&dx<PW&&dy<PH){
-            ctx.fillStyle='rgba(220,235,255,.88)';
-            ctx.fillRect(dx-1,dy-1,2,2);
-        }
-    }
-
-    let spread=1.0;
-    window._setSpread=v=>{spread=v;};
-
-    let t=0;
-    function frame(){
-        t += .005;
-        nodes.forEach(n=>n.orbits.forEach(o=>{o.satA += o.satS * .013;}));
-
-        const PW=canvas.width, PH=canvas.height;
-        ctx.clearRect(0,0,PW,PH);
-
-        // Y-axis rotation → the helix entwines
-        const rot3D = t * .020;
-
-        // Project all nodes (with index preserved)
-        const proj3 = nodes.map((n,i)=>{
-            const p = proj(n, rot3D);
-            const px = Math.round((p.nx-.5)*PW*spread + PW/2);
-            const py = Math.round(p.ny*PH);
-            const scale = 1 + p.depth * 0.40;   // perspective
-            return { n, i, px, py, scale, depth: p.depth };
-        });
-        // Index lookup for edge resolution
-        const idxMap = proj3; // proj3[i] === node i (since we mapped from nodes)
-
-        // Painter's order: draw far first, near last
-        const ordered = [...proj3].sort((a,b)=>a.depth-b.depth);
-
-        // 1. Background sweeps
-        SWEEPS.forEach(s=>drawSweep(s,PW,PH));
-
-        // 2. Edges (using direct index)
-        ctx.lineWidth=1;
-        edges.forEach(([ai,bi])=>{
-            const a=idxMap[ai], b=idxMap[bi];
-            if(!a||!b) return;
-            const g=(glowOf(a.n,t)+glowOf(b.n,t))*.5;
-            ctx.strokeStyle=`rgba(75,125,185,${(.08+g*.16).toFixed(2)})`;
-            ctx.beginPath(); ctx.moveTo(a.px,a.py); ctx.lineTo(b.px,b.py); ctx.stroke();
-        });
-
-        // 3. Pulses
-        pulses.forEach(p=>{
-            p.t=(p.t+p.spd)%1;
-            const a=idxMap[edges[p.ei][0]], b=idxMap[edges[p.ei][1]];
-            if(!a||!b) return;
-            const x=Math.round(a.px+(b.px-a.px)*p.t);
-            const y=Math.round(a.py+(b.py-a.py)*p.t);
-            ctx.fillStyle='rgba(195,222,255,.82)';
-            ctx.fillRect(x,y,1,1);
-        });
-
-        // 4. Outer orbital ellipses (drawn before blobs so blobs sit on top)
-        ordered.forEach(({n,px,py,scale})=>{
-            drawNodeOrbits(px, py, n, scale, rot3D);
-        });
-
-        // 5. Blobs (bullseye + center) — painter's order, far-to-near
-        ordered.forEach(({n,px,py,scale})=>{
-            const g = glowOf(n,t);
-            const R = Math.max(1, Math.round(n.r * scale));
-            drawBlob(px, py, R, n, g);
-        });
-
-        requestAnimationFrame(frame);
-    }
-    frame();
 })();
 
 // ── Scroll: HUD, gradient, spread, reveals
@@ -752,9 +713,10 @@ snap.addEventListener('scroll',()=>{
     const idx=Math.round(st/vh);
     hudItems.forEach((el,i)=>el.classList.toggle('active',i===idx));
 
-    // Spread on scroll
-    const progress=(st%vh)/vh;
-    if(window._setSpread) window._setSpread(1+Math.sin(progress*Math.PI)*.13);
+    // Feed scroll progress (0–1) to Three.js scene
+    const max = snap.scrollHeight - vh;
+    const progress = max > 0 ? st / max : 0;
+    if(window._setScrollProgress) window._setScrollProgress(progress);
 
     // Body warms subtly: #000 → #1c1814
     const p=Math.min(1,st/(vh*3));
