@@ -10,9 +10,10 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
     <style>
         @font-face {
-            font-family: 'Neco-Black';
-            src: url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Black.woff2') format('woff2'),
-                 url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Black.woff') format('woff');
+            font-family: 'Neco-Regular';
+            src: url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Regular.woff2') format('woff2'),
+                 url('./fonts/Neco_Complete/Fonts/WEB/fonts/Neco-Regular.woff') format('woff');
+            font-weight: 400;
         }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,7 +40,7 @@
                 rgba(0,0,0,0.07) 0px,rgba(0,0,0,0.07) 1px,
                 transparent 1px,transparent 3px);
             pointer-events: none;
-            z-index: 997;
+            z-index: 1; /* above the canvas, below all text */
         }
         /* Vignette */
         body::before {
@@ -117,7 +118,8 @@
         .hero-name {
             position: absolute;
             top: 36px; left: 44px;
-            font-family: 'Neco-Black', sans-serif;
+            font-family: 'Neco-Regular', sans-serif;
+            font-weight: 400;
             font-size: clamp(22px, 3.2vw, 42px);
             line-height: .92; color: #fff;
             z-index: 10; letter-spacing: .01em;
@@ -166,7 +168,8 @@
         }
 
         .s-title {
-            font-family: 'Neco-Black', sans-serif;
+            font-family: 'Neco-Regular', sans-serif;
+            font-weight: 400;
             font-size: clamp(18px, 2.4vw, 30px);
             line-height: 1; color: #fff;
             margin-bottom: 28px; letter-spacing: .02em;
@@ -268,7 +271,7 @@
         <div class="hero-name">Diana<br>Kozachek</div>
         <div class="hero-side">
             <p class="hero-tag">PHD RESEARCHER</p>
-            <p class="hero-tag">HCI · INFORMATION SYSTEMS · Currently KAIST, DAEJEON</p>
+            <p class="hero-tag">HCI · INFORMATION SYSTEMS</p>
             <nav class="hero-links">
                 <a href="https://github.com/koizachek" target="_blank">CODE ↗</a>
                 <a href="https://scholar.google.com/citations?user=Yrjnx1YAAAAJ" target="_blank">RESEARCH ↗</a>
@@ -310,7 +313,11 @@
                     <p class="col-head">SELECTED PUBLICATIONS</p>
                     <div class="entry">
                         <a class="e-title" href="https://openreview.net/pdf?id=XyYeGJVAYK" target="_blank">Read and Ignore: What Self-Directed LLM Agents Do in Public Service Scenarios</a>
-                        <p class="e-meta">Diana Kozachek, Kinjalk Srivastava · NeurIPS 2026</p>
+                        <p class="e-meta">Diana Kozachek, Kinjalk Srivastava · Trustworthy AI for Good Workshop · NeurIPS 2026</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://doi.org/10.1016/j.compedu.2026.105802" target="_blank">Orchestrating Scaffolding AI Agents: How Delivery Order Shapes Learning in Problem-Solving Tasks</a>
+                        <p class="e-meta">Elsevier Computers &amp; Education · 2026</p>
                     </div>
                     <div class="entry">
                         <a class="e-title" href="https://alexandria.unisg.ch/entities/publication/1ee83571-d1c4-44bc-9ab9-00d3e0e6c978" target="_blank">Frictionless Futures, Invisible Conflicts: The Case for Scenario Methodology in Human-AI IS Research</a>
@@ -341,8 +348,12 @@
                         <p class="e-meta">HCII 2023, Lecture Notes in Computer Science, Springer</p>
                     </div>
                     <div class="entry">
-                        <a class="e-title" href="https://ieeexplore.ieee.org/abstract/document/9582644" target="_blank">How Pedestrians Perceive Autonomous Vehicles: Evaluating Visual Signals</a>
+                        <a class="e-title" href="https://ieeexplore.ieee.org/abstract/document/9582644" target="_blank">How Pedestrians Perceive Autonomous Buses: Evaluating Visual Signals</a>
                         <p class="e-meta">IEEE ICHMS · 2021</p>
+                    </div>
+                    <div class="entry">
+                        <a class="e-title" href="https://www.hiig.de/wp-content/uploads/2019/11/IGF-Statements-Critical-Voices-WEB.pdf" target="_blank">Against Prediction: The Power of Imagination in the Age of Codes and Numbers</a>
+                        <p class="e-meta">Critical Voices, Visions and Vectors for Internet Governance · 2019</p>
                     </div>
                 </div>
                 <div>
